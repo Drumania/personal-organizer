@@ -138,7 +138,7 @@ export default function CalendarPage() {
         </div>
 
         <div className="col-12">
-          <h5>Events for {format(selectedDate, "PPP")}</h5>
+          <h5 className="mb-4">Events for {format(selectedDate, "PPP")}</h5>
 
           {loading ? (
             <p>Loading...</p>

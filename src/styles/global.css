@@ -110,6 +110,12 @@ input {
   border-color: #333 !important;
 }
 
+.list-group-item + .list-group-item {
+  border-top-width: 0;
+  height: 46px;
+  line-height: 34px;
+}
+
 input,
 textarea,
 select,
