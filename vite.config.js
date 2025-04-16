@@ -16,8 +16,8 @@ export default defineConfig({
         name: "Menta Organizer",
         short_name: "Menta",
         description: "Tu organizador personal relajado y friendly",
-        theme_color: "#ddf4e8", // color menta pastel
-        background_color: "#1b2531",
+        theme_color: "#ff0000", // color menta pastel
+        background_color: "#ff00ff",
         display: "standalone",
         orientation: "portrait",
         scope: "/",

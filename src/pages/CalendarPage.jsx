@@ -68,7 +68,9 @@ export default function CalendarPage() {
     setNewTitle("");
     setNewTime("");
     setRecurrence("none");
-    fetchEvents();
+
+    fetchEvents(); // actualiza eventos del día seleccionado
+    fetchMonthEvents(selectedDate); // 🔁 actualiza los días marcados en el calendario
   };
 
   useEffect(() => {
@@ -100,11 +102,11 @@ export default function CalendarPage() {
       </div>
 
       <div className="row">
-        <div className="col-md-6 mb-4">
+        <div className="col-12 mb-4">
           <Calendar
             onChange={setSelectedDate}
             value={selectedDate}
-            className="bg-light rounded p-2"
+            className="custom-calendar"
             onActiveStartDateChange={({ activeStartDate }) =>
               fetchMonthEvents(activeStartDate)
             }
@@ -118,10 +120,24 @@ export default function CalendarPage() {
 
               return null;
             }}
+            tileClassName={({ date, view }) => {
+              if (view !== "month") return "";
+
+              const today = new Date();
+              const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+              const isPast = date < new Date(today.toDateString()); // solo antes de hoy, sin hora
+
+              return [
+                isWeekend ? "tile-weekend" : "",
+                isPast ? "tile-past" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+            }}
           />
         </div>
 
-        <div className="col-md-6">
+        <div className="col-12">
           <h5>Events for {format(selectedDate, "PPP")}</h5>
 
           {loading ? (
@@ -170,36 +186,52 @@ export default function CalendarPage() {
                       setShowModal(false);
                     }}
                   >
+                    {/* Título como textarea */}
                     <div className="mb-2">
-                      <input
-                        type="text"
-                        className="form-control bg-dark text-white"
+                      <textarea
+                        className="form-control "
                         placeholder="Event title"
+                        rows="3"
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
                         required
                       />
                     </div>
+
+                    {/* Fecha y hora juntos */}
                     <div className="mb-2">
                       <input
-                        type="time"
+                        type="datetime-local"
                         className="form-control bg-dark text-white"
                         value={newTime}
                         onChange={(e) => setNewTime(e.target.value)}
                       />
                     </div>
+
+                    {/* Recurrence como radios */}
                     <div className="mb-3">
-                      <select
-                        className="form-select bg-dark text-white"
-                        value={recurrence}
-                        onChange={(e) => setRecurrence(e.target.value)}
-                      >
-                        <option value="none">No recurrence</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                      </select>
+                      <label className="form-label">Recurrence</label>
+                      <div className="btn-group w-100" role="group">
+                        {["none", "daily", "weekly", "monthly"].map(
+                          (option) => (
+                            <input
+                              key={option}
+                              type="button"
+                              className={`btn ${
+                                recurrence === option
+                                  ? "btn-menta"
+                                  : "btn-outline-light"
+                              }`}
+                              value={
+                                option.charAt(0).toUpperCase() + option.slice(1)
+                              }
+                              onClick={() => setRecurrence(option)}
+                            />
+                          )
+                        )}
+                      </div>
                     </div>
+
                     <button className="btn btn-menta w-100" type="submit">
                       Add Event
                     </button>
