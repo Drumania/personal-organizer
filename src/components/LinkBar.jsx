@@ -7,7 +7,7 @@ export default function LinkBar() {
     location.pathname === path ? "active fw-bold" : "";
 
   return (
-    <ul className="link-nav px-3">
+    <ul className="link-nav px-3 pb-3">
       <li className="nav-item">
         <Link className={`nav-link ${isActive("/")}`} to="/">
           Dashboard

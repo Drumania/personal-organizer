@@ -39,7 +39,7 @@ export default function Navbar() {
   }, [menuOpen]);
 
   return (
-    <nav className="navbar px-3 py-2 justify-content-between">
+    <nav className="navbar px-3 py-4 justify-content-between">
       <Link className="wrap-logo" to="/">
         <img src="/logo.png" alt="menta" />
       </Link>
@@ -50,8 +50,7 @@ export default function Navbar() {
           <img
             src={user.photoURL}
             alt="avatar"
-            className="rounded-circle"
-            style={{ width: 36, height: 36, objectFit: "cover" }}
+            className="avatar"
             onClick={() => setMenuOpen(!menuOpen)}
           />
         ) : (

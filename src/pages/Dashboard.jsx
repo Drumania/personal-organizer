@@ -60,8 +60,6 @@ export default function Dashboard() {
 
   return (
     <div className="container py-4 text-white">
-      <h2 className="mb-4">Dashboard</h2>
-
       {loading ? (
         <p>Loading...</p>
       ) : (
