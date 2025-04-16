@@ -164,8 +164,15 @@ a:hover {
   justify-content: center;
   align-items: center;
   text-decoration: none;
-  width: 100%; /* importante para ocupar el ancho del li */
+  width: 100%;
+  color: var(--menta-color);
+
+  &.active {
+    color: var(--text);
+    background-color: var(--dark-menta-color);
+  }
 }
+
 /* Ítems completados con efecto fade-out */
 .text-decoration-line-through {
   opacity: 0.5;
