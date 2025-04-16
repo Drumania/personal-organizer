@@ -91,6 +91,10 @@ body {
   font-size: var(--font-size);
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 .dark {
   --bg: #1b2531;
   --text: #ffffff;
@@ -180,7 +184,13 @@ select:focus {
 
 .btn-menta {
   background-color: var(--dark-menta-color);
+  color: var(--text);
+  font-weight: bold;
   border: none;
+  font-size: 1rem;
+  padding: 5px 10px;
+  height: 46px;
+  line-height: 38px;
 }
 
 .btn-menta:hover,
@@ -192,6 +202,76 @@ select:focus {
 .btn-outline-light:hover {
   background-color: #fff !important;
   color: #000 !important;
+}
+
+/* calendar */
+.highlight {
+  background-color: #a2e6c6 !important;
+  border-radius: 50%;
+  color: black !important;
+  font-weight: bold;
+}
+
+.dot {
+  margin-top: 4px;
+  width: 6px;
+  height: 6px;
+  background-color: #00c78c;
+  border-radius: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.badge-calendar {
+  margin-top: 4px;
+  background-color: #00c78c;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  display: inline-block;
+  line-height: 1;
+  min-width: 18px;
+  text-align: center;
+}
+
+.custom-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.custom-modal {
+  animation: slideUp 0.3s ease-out;
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+}
+
+@keyframes fadeIn {
+  from {
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Extra: enlaces sin subrayado */

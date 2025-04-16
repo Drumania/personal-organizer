@@ -21,6 +21,7 @@ export default function TodoPage() {
   const [priority, setPriority] = useState("normal");
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -84,47 +85,12 @@ export default function TodoPage() {
 
   return (
     <div className="container py-4 text-white">
-      <h2 className="mb-4">To-do List</h2>
-
-      {/* Formulario */}
-      <form onSubmit={handleAdd} className="row g-2 mb-4">
-        <div className="col-md-5">
-          <input
-            type="text"
-            className="form-control bg-dark text-white"
-            placeholder="New task title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="col-md-3">
-          <select
-            className="form-select bg-dark text-white"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-          >
-            <option value="normal">Normal priority</option>
-            <option value="high">High priority</option>
-          </select>
-        </div>
-
-        <div className="col-md-3">
-          <input
-            type="date"
-            className="form-control bg-dark text-white"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </div>
-
-        <div className="col-md-1">
-          <button className="btn btn-menta w-100" type="submit">
-            +
-          </button>
-        </div>
-      </form>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>To-dos</h2>
+        <button className="btn btn-menta" onClick={() => setShowModal(true)}>
+          <i className="bi bi-plus-lg"></i> Add Task
+        </button>
+      </div>
 
       {/* Lista de tareas por día */}
       {loading ? (
@@ -144,6 +110,68 @@ export default function TodoPage() {
             onDelete={handleDelete}
           />
         </>
+      )}
+
+      {showModal && (
+        <div
+          className="custom-modal-backdrop"
+          onClick={() => setShowModal(false)}
+        >
+          <div className="custom-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content bg-dark text-white p-3 rounded-3">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="m-0">New Task</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setShowModal(false)}
+                ></button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  handleAdd(e);
+                  setShowModal(false);
+                }}
+              >
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    className="form-control bg-dark text-white"
+                    placeholder="Task title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="mb-2">
+                  <select
+                    className="form-select bg-dark text-white"
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                  >
+                    <option value="normal">Normal priority</option>
+                    <option value="high">High priority</option>
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <input
+                    type="date"
+                    className="form-control bg-dark text-white"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+
+                <button className="btn btn-menta w-100" type="submit">
+                  Add Task
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
