@@ -30,6 +30,8 @@ export default function CalendarPage() {
   const [showModal, setShowModal] = useState(false);
   const titleRef = useRef(null);
   const [editingId, setEditingId] = useState(null);
+  const [notify, setNotify] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -69,6 +71,7 @@ export default function CalendarPage() {
       date: format(newDate, "yyyy-MM-dd"),
       time: newTime,
       recurrence,
+      notify,
       createdAt: Timestamp.now(),
     };
 
@@ -90,10 +93,12 @@ export default function CalendarPage() {
     fetchMonthEvents(selectedDate);
   };
 
-  const handleDeleteEvent = async (eventId) => {
-    await deleteDoc(doc(db, "events", eventId));
-    fetchEvents(); // actualiza lista del día
-    fetchMonthEvents(selectedDate); // actualiza puntos en el calendario
+  const handleDeleteEvent = async () => {
+    if (!confirmDeleteId) return;
+    await deleteDoc(doc(db, "events", confirmDeleteId));
+    setConfirmDeleteId(null);
+    fetchEvents();
+    fetchMonthEvents(selectedDate);
   };
 
   useEffect(() => {
@@ -181,10 +186,11 @@ export default function CalendarPage() {
               events={events}
               onEdit={(e) => {
                 setNewTitle(e.title);
-                setNewDate(new Date(e.date));
+                const [year, month, day] = e.date.split("-");
+                setNewDate(new Date(year, month - 1, day));
                 setNewTime(e.time || "");
                 setRecurrence(e.recurrence || "none");
-                setEditingId(e.id); // 👈 importante para saber si estamos editando
+                setEditingId(e.id);
                 setShowModal(true);
               }}
               onDelete={handleDeleteEvent}
@@ -262,6 +268,21 @@ export default function CalendarPage() {
                           />
                         </div>
 
+                        <div className="form-check mt-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="notifyCheckbox"
+                            checked={notify}
+                            onChange={(e) => setNotify(e.target.checked)}
+                          />
+                          <label
+                            className="form-check-label form-check-label ps-2 pt-1"
+                            htmlFor="notifyCheckbox"
+                          >
+                            Notify me before the event
+                          </label>
+                        </div>
                         {/* Recurrence
                         <div className="mb-2">
                           <label className="form-label">Recurrence</label>
@@ -295,7 +316,7 @@ export default function CalendarPage() {
                           className="btn btn-outline-danger w-100 my-3"
                           type="button"
                           onClick={() => {
-                            handleDeleteEvent(editingId);
+                            setConfirmDeleteId(editingId);
                             setShowModal(false);
                           }}
                         >
@@ -314,6 +335,41 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+      {confirmDeleteId && (
+        <div className="modal fade show d-block" tabIndex="-1" role="dialog">
+          <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-content bg-dark text-white">
+              <div className="modal-header">
+                <h5 className="modal-title">Delete Event</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setConfirmDeleteId(null)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete this event?</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setConfirmDeleteId(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteEvent}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

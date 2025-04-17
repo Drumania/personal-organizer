@@ -248,6 +248,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* Días */
 .react-calendar__tile {
+  position: relative;
   background: transparent;
   color: inherit;
   border-radius: 8px;
@@ -313,7 +314,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .badge-calendar {
-  margin-top: 4px;
+  position: absolute;
+  top: 23px;
   background-color: #00c78c;
   color: white;
   font-size: 0.65rem;
@@ -324,6 +326,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   line-height: 1;
   min-width: 18px;
   text-align: center;
+  left: 18px;
 }
 
 .custom-modal-backdrop {
