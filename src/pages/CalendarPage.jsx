@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
@@ -8,21 +8,28 @@ import {
   where,
   getDocs,
   addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import EventThumb from "@/components/EventThumb"; // asegurate del path
 
 export default function CalendarPage() {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [newTitle, setNewTitle] = useState("");
+  const [newDate, setNewDate] = useState(selectedDate);
   const [newTime, setNewTime] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [loading, setLoading] = useState(true);
   const [eventDates, setEventDates] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const titleRef = useRef(null);
+  const [editingId, setEditingId] = useState(null);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -56,21 +63,37 @@ export default function CalendarPage() {
     e.preventDefault();
     if (!newTitle) return;
 
-    await addDoc(collection(db, "events"), {
+    const payload = {
       userId: user.uid,
       title: newTitle,
-      date: format(selectedDate, "yyyy-MM-dd"),
+      date: format(newDate, "yyyy-MM-dd"),
       time: newTime,
       recurrence,
       createdAt: Timestamp.now(),
-    });
+    };
 
+    if (editingId) {
+      // Modo edición
+      await updateDoc(doc(db, "events", editingId), payload);
+    } else {
+      // Modo nuevo
+      await addDoc(collection(db, "events"), payload);
+    }
+
+    // Reset
     setNewTitle("");
     setNewTime("");
     setRecurrence("none");
+    setEditingId(null);
 
-    fetchEvents(); // actualiza eventos del día seleccionado
-    fetchMonthEvents(selectedDate); // 🔁 actualiza los días marcados en el calendario
+    fetchEvents();
+    fetchMonthEvents(selectedDate);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    await deleteDoc(doc(db, "events", eventId));
+    fetchEvents(); // actualiza lista del día
+    fetchMonthEvents(selectedDate); // actualiza puntos en el calendario
   };
 
   useEffect(() => {
@@ -86,6 +109,9 @@ export default function CalendarPage() {
   useEffect(() => {
     if (showModal) {
       document.body.classList.add("modal-open");
+      setTimeout(() => {
+        titleRef.current?.focus();
+      }, 100); // le damos un pelito de delay para asegurar el render
     } else {
       document.body.classList.remove("modal-open");
     }
@@ -95,7 +121,13 @@ export default function CalendarPage() {
     <div className="container py-4 text-white">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Calendar</h2>
-        <button className="btn btn-menta" onClick={() => setShowModal(true)}>
+        <button
+          className="btn btn-menta"
+          onClick={() => {
+            setNewDate(selectedDate);
+            setShowModal(true);
+          }}
+        >
           <i className="bi bi-plus-lg"></i>
           Add Event
         </button>
@@ -145,20 +177,18 @@ export default function CalendarPage() {
           ) : events.length === 0 ? (
             <p className="text-secondary">No events this day.</p>
           ) : (
-            <ul className="list-group mb-4">
-              {events.map((event) => (
-                <li
-                  key={event.id}
-                  className="list-group-item bg-dark text-white"
-                >
-                  <strong>{event.title}</strong>{" "}
-                  {event.time && <span>at {event.time}</span>}{" "}
-                  {event.recurrence !== "none" && (
-                    <small className="text-info">({event.recurrence})</small>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <EventThumb
+              events={events}
+              onEdit={(e) => {
+                setNewTitle(e.title);
+                setNewDate(new Date(e.date));
+                setNewTime(e.time || "");
+                setRecurrence(e.recurrence || "none");
+                setEditingId(e.id); // 👈 importante para saber si estamos editando
+                setShowModal(true);
+              }}
+              onDelete={handleDeleteEvent}
+            />
           )}
 
           {showModal && (
@@ -172,7 +202,10 @@ export default function CalendarPage() {
               >
                 <div className="modal-content bg-dark text-white p-3 rounded-3">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="m-0">New Event</h5>
+                    <h5 className="m-0">
+                      {editingId ? "Edit Event" : "New Event"}
+                    </h5>
+
                     <button
                       type="button"
                       className="btn-close btn-close-white"
@@ -186,10 +219,11 @@ export default function CalendarPage() {
                       setShowModal(false);
                     }}
                   >
-                    {/* Título como textarea */}
+                    {/* Título */}
                     <div className="mb-2">
                       <textarea
-                        className="form-control "
+                        ref={titleRef}
+                        className="form-control"
                         placeholder="Event title"
                         rows="3"
                         value={newTitle}
@@ -198,42 +232,80 @@ export default function CalendarPage() {
                       />
                     </div>
 
-                    {/* Fecha y hora juntos */}
+                    {/* Fecha (solo día) */}
                     <div className="mb-2">
+                      <label className="form-label">Date</label>
                       <input
-                        type="datetime-local"
+                        type="date"
                         className="form-control bg-dark text-white"
-                        value={newTime}
-                        onChange={(e) => setNewTime(e.target.value)}
+                        value={format(newDate, "yyyy-MM-dd")}
+                        onChange={(e) => {
+                          const [year, month, day] = e.target.value.split("-");
+                          const newSelected = new Date(year, month - 1, day);
+                          setNewDate(newSelected);
+                          setSelectedDate(newSelected);
+                        }}
                       />
                     </div>
 
-                    {/* Recurrence como radios */}
-                    <div className="mb-3">
-                      <label className="form-label">Recurrence</label>
-                      <div className="btn-group w-100" role="group">
-                        {["none", "daily", "weekly", "monthly"].map(
-                          (option) => (
-                            <input
-                              key={option}
-                              type="button"
-                              className={`btn ${
-                                recurrence === option
-                                  ? "btn-menta"
-                                  : "btn-outline-light"
-                              }`}
-                              value={
-                                option.charAt(0).toUpperCase() + option.slice(1)
-                              }
-                              onClick={() => setRecurrence(option)}
-                            />
-                          )
-                        )}
+                    <details className="mt-3 mb-5">
+                      <summary className="mb-2">More Options</summary>
+                      <div className="details-content">
+                        {/* Hora */}
+                        <div className="mb-2">
+                          <label className="form-label">Time (optional)</label>
+                          <input
+                            type="time"
+                            className="form-control bg-dark text-white"
+                            value={newTime}
+                            onChange={(e) => setNewTime(e.target.value)}
+                          />
+                        </div>
+
+                        {/* Recurrence
+                        <div className="mb-2">
+                          <label className="form-label">Recurrence</label>
+                          <select
+                            className="form-select bg-dark text-white"
+                            value={recurrence}
+                            onChange={(e) => setRecurrence(e.target.value)}
+                          >
+                            <option value="none">None</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                          </select>
+
+                          {/* Mensaje explicativo dinámico
+                          <small className="text-secondary mt-1 d-block">
+                            {recurrence === "none" &&
+                              "This event will not repeat."}
+                            {recurrence === "daily" &&
+                              "This event will repeat every day."}
+                            {recurrence === "weekly" &&
+                              "This event will repeat every week."}
+                            {recurrence === "monthly" &&
+                              "This event will repeat every month."}
+                          </small>
+                        </div> */}
                       </div>
-                    </div>
+
+                      {editingId && (
+                        <button
+                          className="btn btn-outline-danger w-100 my-3"
+                          type="button"
+                          onClick={() => {
+                            handleDeleteEvent(editingId);
+                            setShowModal(false);
+                          }}
+                        >
+                          Delete Event
+                        </button>
+                      )}
+                    </details>
 
                     <button className="btn btn-menta w-100" type="submit">
-                      Add Event
+                      Save Event
                     </button>
                   </form>
                 </div>

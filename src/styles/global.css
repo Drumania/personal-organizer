@@ -218,6 +218,34 @@ select:focus {
   width: 100%;
 }
 
+details[open] summary + .details-content {
+  max-height: 500px;
+  padding-top: 0.5rem;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.details-content {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+/* Estilo común para inputs */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
+/* Webkit-only para cambiar el ícono del date/time picker */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(62%) sepia(32%) saturate(400%) hue-rotate(105deg)
+    brightness(180%) contrast(90%);
+  cursor: pointer;
+}
+
 /* Días */
 .react-calendar__tile {
   background: transparent;
