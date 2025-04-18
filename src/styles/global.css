@@ -210,6 +210,52 @@ select:focus {
   color: #000 !important;
 }
 
+/* to dos */
+/* Ocultamos el checkbox real */
+input[type="checkbox"].custom-check {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 20px;
+  height: 20px;
+  border: 2px solid gray !important;
+  border-radius: 4px;
+  background-color: transparent !important;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Icono personalizado cuando está checked */
+input[type="checkbox"].custom-check:checked {
+  color: var(--menta-color) !important;
+  border-color: var(--menta-color) !important;
+}
+
+/* Agregamos un ícono "✔" como pseudo-elemento */
+input[type="checkbox"].custom-check:checked::after {
+  content: "✓";
+  color: var(--menta-color);
+  font-size: 21px;
+  position: absolute;
+  top: -7px;
+  left: 7px;
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-success {
+  animation: fadeSlideIn 0.5s ease-out;
+}
+
 /* calendar */
 .custom-calendar {
   background-color: transparent;

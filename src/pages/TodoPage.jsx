@@ -13,6 +13,7 @@ import {
 import { db } from "@/firebase/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays } from "date-fns";
+import TodoThumb from "@/components/TodoThumb";
 
 export default function TodoPage() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function TodoPage() {
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null); // para detectar modo edición
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -51,16 +53,34 @@ export default function TodoPage() {
     fetchTasks();
   };
 
-  const toggleComplete = async (task) => {
-    await updateDoc(doc(db, "todos", task.id), {
-      completed: !task.completed,
-    });
-    fetchTasks();
+  const handleEdit = (task) => {
+    setTitle(task.title);
+    setPriority(task.priority);
+    setDate(task.date);
+    setEditingId(task.id);
+    setShowModal(true);
   };
 
   const handleDelete = async (taskId) => {
     await deleteDoc(doc(db, "todos", taskId));
     fetchTasks();
+  };
+
+  const toggleComplete = async (task) => {
+    try {
+      await updateDoc(doc(db, "todos", task.id), {
+        completed: !task.completed,
+      });
+
+      // actualizar localmente sin recargar todo
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === task.id ? { ...t, completed: !t.completed } : t
+        )
+      );
+    } catch (err) {
+      console.error("Error updating task:", err);
+    }
   };
 
   const today = format(new Date(), "yyyy-MM-dd");
@@ -92,22 +112,23 @@ export default function TodoPage() {
         </button>
       </div>
 
-      {/* Lista de tareas por día */}
       {loading ? (
         <p>Loading tasks...</p>
       ) : (
         <>
-          <DaySection
+          <TodoThumb
             title="Today"
             tasks={groupTasks(today)}
             onToggle={toggleComplete}
-            onDelete={handleDelete}
+            onDelete={handleDelete} // este se usa en el modal ahora
+            onEdit={handleEdit}
           />
-          <DaySection
+          <TodoThumb
             title="Tomorrow"
             tasks={groupTasks(tomorrow)}
             onToggle={toggleComplete}
             onDelete={handleDelete}
+            onEdit={handleEdit}
           />
         </>
       )}
@@ -134,87 +155,91 @@ export default function TodoPage() {
                   setShowModal(false);
                 }}
               >
+                {/* Título */}
                 <div className="mb-2">
-                  <input
-                    type="text"
+                  <textarea
                     className="form-control bg-dark text-white"
                     placeholder="Task title"
+                    rows="3"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
                   />
                 </div>
 
-                <div className="mb-2">
-                  <select
-                    className="form-select bg-dark text-white"
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
-                  >
-                    <option value="normal">Normal priority</option>
-                    <option value="high">High priority</option>
-                  </select>
+                {/* Checkbox Today */}
+                <div className="form-check form-switch mb-3">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="todayCheck"
+                    checked={date === format(new Date(), "yyyy-MM-dd")}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setDate(format(new Date(), "yyyy-MM-dd"));
+                      } else {
+                        setDate(""); // lo dejamos vacío para forzar al user a elegir
+                      }
+                    }}
+                  />
+                  <label className="form-check-label" htmlFor="todayCheck">
+                    Today
+                  </label>
                 </div>
 
+                {/* Date picker si NO es hoy */}
+                {date !== format(new Date(), "yyyy-MM-dd") && (
+                  <div className="mb-3">
+                    <input
+                      type="date"
+                      className="form-control bg-dark text-white"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Prioridad */}
                 <div className="mb-3">
-                  <input
-                    type="date"
-                    className="form-control bg-dark text-white"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
+                  <label className="form-label">Priority</label>
+                  <div className="btn-group w-100" role="group">
+                    {["normal", "high"].map((level) => (
+                      <input
+                        key={level}
+                        type="button"
+                        className={`btn ${
+                          priority === level ? "btn-menta" : "btn-outline-light"
+                        }`}
+                        value={level.charAt(0).toUpperCase() + level.slice(1)}
+                        onClick={() => setPriority(level)}
+                      />
+                    ))}
+                  </div>
                 </div>
+
+                {/* Eliminar (solo si está en modo edición) */}
+                {editingId && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger w-100 my-3"
+                    onClick={() => {
+                      handleDelete(editingId);
+                      setShowModal(false);
+                    }}
+                  >
+                    Delete Task
+                  </button>
+                )}
 
                 <button className="btn btn-menta w-100" type="submit">
-                  Add Task
+                  {editingId ? "Save Changes" : "Add Task"}
                 </button>
               </form>
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function DaySection({ title, tasks, onToggle, onDelete }) {
-  if (tasks.length === 0) return null;
-
-  return (
-    <div className="mb-5">
-      <h5 className="mb-3">{title}</h5>
-      <ul className="list-group">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className={`list-group-item d-flex justify-content-between align-items-center bg-dark text-white ${
-              task.completed ? "text-decoration-line-through opacity-50" : ""
-            }`}
-          >
-            <span>
-              {task.title}{" "}
-              {task.priority === "high" && (
-                <span className="badge bg-danger ms-2">High</span>
-              )}
-            </span>
-
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-sm btn-success"
-                onClick={() => onToggle(task)}
-              >
-                {task.completed ? "Undo" : "Done"}
-              </button>
-              <button
-                className="btn btn-sm btn-outline-danger"
-                onClick={() => onDelete(task.id)}
-              >
-                ✕
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
