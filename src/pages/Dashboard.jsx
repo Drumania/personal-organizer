@@ -5,10 +5,13 @@ import {
   query,
   where,
   getDocs,
-  Timestamp,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
+import TodoThumb from "@/components/TodoThumb";
+import EventThumb from "@/components/EventThumb"; // si ya lo estás usando
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -17,40 +20,39 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const today = new Date();
-  const todayDate = format(today, "yyyy-MM-dd");
+  const todayStr = format(today, "yyyy-MM-dd");
+  const tomorrowStr = format(addDays(today, 1), "yyyy-MM-dd");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
 
-      // Get today's tasks
+      // Fetch tasks for today and tomorrow
       const todosRef = collection(db, "todos");
-      const q1 = query(
-        todosRef,
-        where("userId", "==", user.uid),
-        where("date", "==", todayDate)
-      );
+      const q1 = query(todosRef, where("userId", "==", user.uid));
       const snap1 = await getDocs(q1);
-      const tasksToday = snap1.docs.map((doc) => ({
+      const allTasks = snap1.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
 
-      // Get upcoming events (next 5 days)
+      const today = allTasks.filter((t) => t.date === todayStr);
+      const tomorrow = allTasks.filter((t) => t.date === tomorrowStr);
+      setTodayTasks({ today, tomorrow });
+
+      // Fetch upcoming events
       const eventsRef = collection(db, "events");
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 5);
+      const futureDate = format(addDays(new Date(), 5), "yyyy-MM-dd");
 
       const q2 = query(
         eventsRef,
         where("userId", "==", user.uid),
-        where("date", ">=", todayDate),
-        where("date", "<=", format(futureDate, "yyyy-MM-dd"))
+        where("date", ">=", todayStr),
+        where("date", "<=", futureDate)
       );
       const snap2 = await getDocs(q2);
       const events = snap2.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-      setTodayTasks(tasksToday);
       setUpcomingEvents(events);
       setLoading(false);
     };
@@ -58,34 +60,65 @@ export default function Dashboard() {
     fetchData();
   }, [user]);
 
+  const sortTasks = (tasks) =>
+    tasks.slice().sort((a, b) => {
+      if (!a.completed && b.completed) return -1;
+      if (a.completed && !b.completed) return 1;
+      if (a.priority === "high" && b.priority !== "high") return -1;
+      if (a.priority !== "high" && b.priority === "high") return 1;
+      return 0;
+    });
+
+  const toggleComplete = async (task) => {
+    await updateDoc(doc(db, "todos", task.id), {
+      completed: !task.completed,
+    });
+
+    // actualiza localmente sin refetch
+    setTodayTasks((prev) => ({
+      today: prev.today.map((t) =>
+        t.id === task.id ? { ...t, completed: !t.completed } : t
+      ),
+      tomorrow: prev.tomorrow.map((t) =>
+        t.id === task.id ? { ...t, completed: !t.completed } : t
+      ),
+    }));
+  };
+
   return (
     <div className="container py-4 text-white">
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
-          {/* TASKS TODAY */}
+          <div
+            className="d-flex justify-content-center align-items-center gap-3 px-4 py-3 rounded-3 mb-4"
+            style={{
+              color: "var(--menta-color)", // texto oscuro para contraste
+              fontWeight: "500",
+            }}
+          >
+            <i className="bi bi-calendar3" style={{ fontSize: "1.5rem" }}></i>
+            <div>
+              <div style={{ fontSize: "1.25rem" }}>
+                {format(new Date(), "EEEE, MMMM d, yyyy")}
+              </div>
+            </div>
+          </div>
+
+          {/* TASKS */}
           <section className="mb-5">
-            <h4 className="mb-3">Tasks for Today</h4>
-            {todayTasks.length === 0 ? (
-              <p className="text-secondary">No tasks for today.</p>
-            ) : (
-              <ul className="list-group">
-                {todayTasks.map((task) => (
-                  <li
-                    key={task.id}
-                    className={`list-group-item d-flex justify-content-between align-items-center bg-dark text-white ${
-                      task.completed ? "text-decoration-line-through" : ""
-                    }`}
-                  >
-                    {task.title}
-                    {task.priority === "high" && (
-                      <span className="badge bg-danger">High</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <TodoThumb
+              title="Today"
+              tasks={sortTasks(todayTasks.today)}
+              onToggle={toggleComplete}
+            />
+
+            <TodoThumb
+              title="Tomorrow"
+              tasks={sortTasks(todayTasks.tomorrow)}
+              onToggle={toggleComplete}
+            />
           </section>
 
           {/* UPCOMING EVENTS */}
@@ -94,26 +127,8 @@ export default function Dashboard() {
             {upcomingEvents.length === 0 ? (
               <p className="text-secondary">No upcoming events.</p>
             ) : (
-              <ul className="list-group">
-                {upcomingEvents.map((event) => (
-                  <li
-                    key={event.id}
-                    className="list-group-item bg-dark text-white"
-                  >
-                    <strong>{event.title}</strong> — {event.date}{" "}
-                    {event.time && <span>at {event.time}</span>}
-                  </li>
-                ))}
-              </ul>
+              <EventThumb events={upcomingEvents} />
             )}
-          </section>
-
-          {/* SUMMARY (placeholder) */}
-          <section>
-            <h4 className="mb-3">This Week</h4>
-            <p>✔️ 3 tasks completed</p>
-            <p>🕓 2 upcoming events</p>
-            <p>🛒 5 items in your shopping list</p>
           </section>
         </>
       )}

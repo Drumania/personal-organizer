@@ -37,13 +37,15 @@ export default function TodoThumb({
               )}
             </div>
 
-            <button
-              className="btn btn-sm text-white"
-              onClick={() => onEdit(task)}
-              title="Edit"
-            >
-              <i className="bi bi-gear"></i>
-            </button>
+            {onEdit && (
+              <button
+                className="btn btn-sm text-white"
+                onClick={() => onEdit(task)}
+                title="Edit"
+              >
+                <i className="bi bi-gear"></i>
+              </button>
+            )}
           </li>
         ))}
       </ul>

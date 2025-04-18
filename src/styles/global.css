@@ -222,7 +222,6 @@ input[type="checkbox"].custom-check {
   background-color: transparent !important;
   position: relative;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 /* Icono personalizado cuando está checked */
