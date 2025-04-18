@@ -11,7 +11,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays } from "date-fns";
 import TodoThumb from "@/components/TodoThumb";
-import EventThumb from "@/components/EventThumb"; // si ya lo estás usando
+import EventThumb from "@/components/EventThumb";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -74,7 +74,6 @@ export default function Dashboard() {
       completed: !task.completed,
     });
 
-    // actualiza localmente sin refetch
     setTodayTasks((prev) => ({
       today: prev.today.map((t) =>
         t.id === task.id ? { ...t, completed: !t.completed } : t
@@ -91,18 +90,17 @@ export default function Dashboard() {
         <p>Loading...</p>
       ) : (
         <>
+          {/* Fecha actual */}
           <div
             className="d-flex justify-content-center align-items-center gap-3 px-4 py-3 rounded-3 mb-4"
             style={{
-              color: "var(--menta-color)", // texto oscuro para contraste
+              color: "var(--menta-color)",
               fontWeight: "500",
             }}
           >
             <i className="bi bi-calendar3" style={{ fontSize: "1.5rem" }}></i>
-            <div>
-              <div style={{ fontSize: "1.25rem" }}>
-                {format(new Date(), "EEEE, MMMM d, yyyy")}
-              </div>
+            <div style={{ fontSize: "1.25rem" }}>
+              {format(new Date(), "EEEE, MMMM d, yyyy")}
             </div>
           </div>
 
@@ -113,7 +111,6 @@ export default function Dashboard() {
               tasks={sortTasks(todayTasks.today)}
               onToggle={toggleComplete}
             />
-
             <TodoThumb
               title="Tomorrow"
               tasks={sortTasks(todayTasks.tomorrow)}

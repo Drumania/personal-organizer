@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { differenceInCalendarDays } from "date-fns";
 
 export default function EventThumb({ events = [], onEdit, onDelete }) {
   const [activeMenuId, setActiveMenuId] = useState(null);
@@ -13,6 +14,17 @@ export default function EventThumb({ events = [], onEdit, onDelete }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  function getRelativeDayLabel(dateStr) {
+    const today = new Date();
+    const targetDate = new Date(dateStr);
+    const diff = differenceInCalendarDays(targetDate, today);
+
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Tomorrow";
+    if (diff > 1) return `In ${diff} days`;
+    return "";
+  }
 
   if (!events.length) {
     return <p className="text-secondary">No events this day.</p>;
@@ -30,6 +42,8 @@ export default function EventThumb({ events = [], onEdit, onDelete }) {
           return eventDateTime < new Date();
         };
 
+        const relativeDay = getRelativeDayLabel(event.date);
+
         return (
           <li
             key={event.id}
@@ -38,24 +52,38 @@ export default function EventThumb({ events = [], onEdit, onDelete }) {
             <div>
               <strong>{event.title}</strong>
               <br />
-              <small>
+              <small className="d-block mt-1">
+                {relativeDay && (
+                  <span className="badge bg-menta text-dark me-2">
+                    {relativeDay}
+                  </span>
+                )}
                 {event.time && (
                   <span className="opacity-50">at {event.time}</span>
                 )}{" "}
-                {event.notify && <span className="text-danger fw-bold">!</span>}
+                {isPastEventWithNotify() && (
+                  <span
+                    className="text-danger fw-bold"
+                    title="This event had a reminder"
+                  >
+                    !
+                  </span>
+                )}
                 {event.recurrence !== "none" && (
                   <small className="text-info ms-2">({event.recurrence})</small>
                 )}
               </small>
             </div>
 
-            <button
-              className="btn btn-sm text-white"
-              onClick={() => onEdit(event)}
-              title="Edit"
-            >
-              <i className="bi bi-gear"></i>
-            </button>
+            {onEdit && (
+              <button
+                className="btn btn-sm text-white"
+                onClick={() => onEdit(event)}
+                title="Edit"
+              >
+                <i className="bi bi-gear"></i>
+              </button>
+            )}
           </li>
         );
       })}
