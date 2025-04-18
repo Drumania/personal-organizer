@@ -79,20 +79,15 @@ export default function Navbar() {
         {menuOpen && (
           <div ref={menuRef} className="floating-menu">
             <p className="fw-bold mb-2">{user?.displayName || user.email}</p>
-            <button
-              className="btn btn-sm btn-outline-light w-100 mb-2"
-              onClick={toggleTheme}
-            >
+            <button className="nav-link py-3" onClick={toggleTheme}>
               {dark ? "Switch to Light" : "Switch to Dark"}
             </button>
-            <button
-              className="btn btn-sm btn-outline-secondary w-100 mb-2"
-              onClick={() => alert("Coming soon")}
-            >
+            <Link className="nav-link py-3" to="/settings">
               Settings
-            </button>
+            </Link>
+            <hr />
             <button
-              className="btn btn-sm btn-danger w-100"
+              className="btn btn-sm btn-danger w-100 "
               onClick={handleLogout}
             >
               Logout

@@ -7,6 +7,8 @@ import ShoppingList from "./pages/ShoppingList";
 import { useAuth } from "./contexts/AuthContext";
 import Navbar from "@/components/Navbar"; // asegurate del path
 import LinkBar from "./components/LinkBar";
+import UserSettings from "./components/UserSettings";
+import NotificationWatcher from "@/components/NotificationWatcher";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -20,6 +22,7 @@ export default function App() {
         <>
           <Navbar />
           <LinkBar />
+          <NotificationWatcher />
         </>
       )}
       {/* MOSTRAR NAVBAR FUERA DE ROUTES */}
@@ -33,6 +36,7 @@ export default function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/shopping" element={<ShoppingList />} />
             <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/settings" element={<UserSettings />} />
           </>
         )}
       </Routes>
