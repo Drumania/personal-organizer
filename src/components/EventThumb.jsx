@@ -17,13 +17,43 @@ export default function EventThumb({ events = [], onEdit, onDelete }) {
 
   function getRelativeDayLabel(dateStr) {
     const today = new Date();
-    const targetDate = new Date(dateStr);
+    today.setHours(0, 0, 0, 0);
+
+    const [year, month, day] = dateStr.split("-");
+    const targetDate = new Date(Number(year), Number(month) - 1, Number(day));
+
     const diff = differenceInCalendarDays(targetDate, today);
 
     if (diff === 0) return "Today";
     if (diff === 1) return "Tomorrow";
     if (diff > 1) return `In ${diff} days`;
     return "";
+  }
+
+  function getItemClass(dateStr) {
+    const [y, m, d] = dateStr.split("-");
+    const targetDate = new Date(Number(y), Number(m) - 1, Number(d));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    targetDate.setHours(0, 0, 0, 0);
+
+    const diff = differenceInCalendarDays(targetDate, today);
+    if (diff === 0) return "bg-menta text-dark";
+    if (diff === 1) return "bg-dark-menta text-white";
+    return "bg-dark text-white";
+  }
+
+  function getBadgeClass(dateStr) {
+    const [y, m, d] = dateStr.split("-");
+    const targetDate = new Date(Number(y), Number(m) - 1, Number(d));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    targetDate.setHours(0, 0, 0, 0);
+
+    const diff = differenceInCalendarDays(targetDate, today);
+    if (diff === 0) return "bg-dark-menta text-dark";
+    if (diff === 1) return "bg-menta text-dark";
+    return "bg-menta text-dark";
   }
 
   if (!events.length) {
@@ -43,21 +73,26 @@ export default function EventThumb({ events = [], onEdit, onDelete }) {
         };
 
         const relativeDay = getRelativeDayLabel(event.date);
+        const itemClass = getItemClass(event.date);
+        const badgeClass = getBadgeClass(event.date);
 
         return (
           <li
             key={event.id}
-            className="list-group-item bg-dark text-white d-flex justify-content-between align-items-start position-relative"
+            className={`list-group-item d-flex justify-content-between align-items-start position-relative ${itemClass}`}
           >
-            <div>
-              <strong>{event.title}</strong>
-              <br />
-              <small className="d-block mt-1">
+            <div className="w-100">
+              <div className="d-flex justify-content-between align-items-center">
+                <strong>{event.title}</strong>
+
                 {relativeDay && (
-                  <span className="badge bg-menta text-dark me-2">
+                  <span className={`badge ${badgeClass} ms-2`}>
                     {relativeDay}
                   </span>
                 )}
+              </div>
+
+              <small className="d-block mt-1">
                 {event.time && (
                   <span className="opacity-50">at {event.time}</span>
                 )}{" "}
@@ -70,14 +105,14 @@ export default function EventThumb({ events = [], onEdit, onDelete }) {
                   </span>
                 )}
                 {event.recurrence !== "none" && (
-                  <small className="text-info ms-2">({event.recurrence})</small>
+                  <span className="text-info ms-2">({event.recurrence})</span>
                 )}
               </small>
             </div>
 
             {onEdit && (
               <button
-                className="btn btn-sm text-white"
+                className="btn btn-sm text-white ms-2"
                 onClick={() => onEdit(event)}
                 title="Edit"
               >

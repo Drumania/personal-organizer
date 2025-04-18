@@ -112,8 +112,6 @@ input {
 
 .list-group-item + .list-group-item {
   border-top-width: 0;
-  height: 46px;
-  line-height: 34px;
 }
 
 input,
@@ -277,6 +275,19 @@ details[open] summary + .details-content {
   transition: all 0.3s ease;
 }
 
+.bg-menta {
+  background-color: var(--menta-color);
+}
+
+.bg-dark-menta {
+  background-color: var(--dark-menta-color);
+}
+
+.badge.bg-menta {
+  color: #000;
+  font-weight: 500;
+}
+
 /* Estilo común para inputs */
 input[type="date"],
 input[type="time"] {
@@ -292,6 +303,18 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 /* Días */
+
+.react-calendar button {
+  margin: 0;
+  border: 0;
+  outline: none;
+  height: 47px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 .react-calendar__tile {
   position: relative;
   background: transparent;

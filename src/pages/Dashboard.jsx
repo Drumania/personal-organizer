@@ -111,20 +111,22 @@ export default function Dashboard() {
               tasks={sortTasks(todayTasks.today)}
               onToggle={toggleComplete}
             />
-            <TodoThumb
+            {/* <TodoThumb
               title="Tomorrow"
               tasks={sortTasks(todayTasks.tomorrow)}
               onToggle={toggleComplete}
-            />
+            /> */}
           </section>
 
           {/* UPCOMING EVENTS */}
           <section className="mb-5">
-            <h4 className="mb-3">Upcoming Events</h4>
-            {upcomingEvents.length === 0 ? (
-              <p className="text-secondary">No upcoming events.</p>
+            <h4 className="mb-3">Events</h4>
+            {upcomingEvents.filter((e) => e.date === todayStr).length === 0 ? (
+              <p className="text-secondary">No events for today.</p>
             ) : (
-              <EventThumb events={upcomingEvents} />
+              <EventThumb
+                events={upcomingEvents.filter((e) => e.date === todayStr)}
+              />
             )}
           </section>
         </>
