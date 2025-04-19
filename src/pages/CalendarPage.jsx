@@ -255,7 +255,9 @@ export default function CalendarPage() {
                     </div>
 
                     <details className="mt-3 mb-5">
-                      <summary className="mb-2">More Options</summary>
+                      <summary className="opacity-50 mb-2">
+                        More Options
+                      </summary>
                       <div className="details-content">
                         {/* Hora */}
                         <div className="mb-2">
