@@ -235,26 +235,26 @@ export default function TodoPage() {
                 </div>
 
                 {editingId && (
-                  <>
+                  <div className="mb-3 d-flex justify-content-between gap-3 border-top pt-3 mt-3">
                     <button
                       type="button"
-                      className="btn btn-outline-warning w-100 mb-2"
+                      className="btn btn-outline-secondary px-4"
                       onClick={handleSkipToTomorrow}
                     >
-                      ⏭ Skip to Tomorrow
+                      Skip to Tomorrow
                     </button>
 
                     <button
                       type="button"
-                      className="btn btn-outline-danger w-100 mb-3"
+                      className="btn btn-outline-danger px-4"
                       onClick={() => {
                         handleDelete(editingId);
                         setShowModal(false);
                       }}
                     >
-                      🗑 Delete Task
+                      Delete Task
                     </button>
-                  </>
+                  </div>
                 )}
 
                 <button type="submit" className="btn btn-menta w-100">
