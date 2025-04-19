@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar"; // asegurate del path
 import LinkBar from "./components/LinkBar";
 import UserSettings from "./components/UserSettings";
 import NotificationWatcher from "@/components/NotificationWatcher";
+import SwipeWrapper from "./components/SwipeWrapper";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -25,18 +26,46 @@ export default function App() {
           <NotificationWatcher />
         </>
       )}
-      {/* MOSTRAR NAVBAR FUERA DE ROUTES */}
+
       <Routes>
         {!user ? (
           <Route path="/*" element={<Login />} />
         ) : (
           <>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/todos" element={<TodoPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/shopping" element={<ShoppingList />} />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route
+              path="/"
+              element={
+                <SwipeWrapper>
+                  <Dashboard />
+                </SwipeWrapper>
+              }
+            />
+            <Route
+              path="/todos"
+              element={
+                <SwipeWrapper>
+                  <TodoPage />
+                </SwipeWrapper>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <SwipeWrapper>
+                  <CalendarPage />
+                </SwipeWrapper>
+              }
+            />
+            <Route
+              path="/shopping"
+              element={
+                <SwipeWrapper>
+                  <ShoppingList />
+                </SwipeWrapper>
+              }
+            />
             <Route path="/settings" element={<UserSettings />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </>
         )}
       </Routes>
