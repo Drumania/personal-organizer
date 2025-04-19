@@ -79,9 +79,9 @@ export default function Navbar() {
         {menuOpen && (
           <div ref={menuRef} className="floating-menu">
             <p className="fw-bold mb-2">{user?.displayName || user.email}</p>
-            <button className="nav-link py-3" onClick={toggleTheme}>
+            {/* <button className="nav-link py-3" onClick={toggleTheme}>
               {dark ? "Switch to Light" : "Switch to Dark"}
-            </button>
+            </button> */}
             <Link className="nav-link py-3" to="/settings">
               Settings
             </Link>
