@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   collection,
   query,
@@ -23,7 +23,9 @@ export default function TodoPage() {
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState(null); // para detectar modo edición
+  const [editingId, setEditingId] = useState(null);
+  const [isToday, setIsToday] = useState(true);
+  const titleRef = useRef(null);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -34,31 +36,39 @@ export default function TodoPage() {
     setLoading(false);
   };
 
-  const handleAdd = async (e) => {
+  const handleAddOrUpdate = async (e) => {
     e.preventDefault();
     if (!title) return;
 
-    await addDoc(collection(db, "todos"), {
+    const payload = {
       userId: user.uid,
       title,
       priority,
       completed: false,
       date,
       createdAt: serverTimestamp(),
-    });
+    };
+
+    if (editingId) {
+      await updateDoc(doc(db, "todos", editingId), payload);
+    } else {
+      await addDoc(collection(db, "todos"), payload);
+    }
 
     setTitle("");
     setPriority("normal");
     setDate(format(new Date(), "yyyy-MM-dd"));
+    setEditingId(null);
+    setIsToday(true);
+    setShowModal(false);
     fetchTasks();
   };
 
-  const handleEdit = (task) => {
-    setTitle(task.title);
-    setPriority(task.priority);
-    setDate(task.date);
-    setEditingId(task.id);
-    setShowModal(true);
+  const toggleComplete = async (task) => {
+    await updateDoc(doc(db, "todos", task.id), {
+      completed: !task.completed,
+    });
+    fetchTasks();
   };
 
   const handleDelete = async (taskId) => {
@@ -66,21 +76,20 @@ export default function TodoPage() {
     fetchTasks();
   };
 
-  const toggleComplete = async (task) => {
-    try {
-      await updateDoc(doc(db, "todos", task.id), {
-        completed: !task.completed,
-      });
+  const handleEdit = (task) => {
+    setTitle(task.title);
+    setPriority(task.priority || "normal");
+    setDate(task.date);
+    setEditingId(task.id);
+    setIsToday(task.date === format(new Date(), "yyyy-MM-dd"));
+    setShowModal(true);
+  };
 
-      // actualizar localmente sin recargar todo
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === task.id ? { ...t, completed: !t.completed } : t
-        )
-      );
-    } catch (err) {
-      console.error("Error updating task:", err);
-    }
+  const handleSkipToTomorrow = async () => {
+    const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
+    await updateDoc(doc(db, "todos", editingId), { date: tomorrow });
+    setShowModal(false);
+    fetchTasks();
   };
 
   const today = format(new Date(), "yyyy-MM-dd");
@@ -120,7 +129,7 @@ export default function TodoPage() {
             title="Today"
             tasks={groupTasks(today)}
             onToggle={toggleComplete}
-            onDelete={handleDelete} // este se usa en el modal ahora
+            onDelete={handleDelete}
             onEdit={handleEdit}
           />
           <TodoThumb
@@ -141,7 +150,7 @@ export default function TodoPage() {
           <div className="custom-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content bg-dark text-white p-3 rounded-3">
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="m-0">New Task</h5>
+                <h5 className="m-0">{editingId ? "Edit Task" : "New Task"}</h5>
                 <button
                   type="button"
                   className="btn-close btn-close-white"
@@ -149,91 +158,107 @@ export default function TodoPage() {
                 ></button>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  handleAdd(e);
-                  setShowModal(false);
-                }}
-              >
-                {/* Título */}
+              <form onSubmit={handleAddOrUpdate}>
                 <div className="mb-2">
                   <textarea
-                    className="form-control bg-dark text-white"
+                    ref={titleRef}
+                    className="form-control"
                     placeholder="Task title"
-                    rows="3"
+                    rows="2"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
                   />
                 </div>
 
-                {/* Checkbox Today */}
-                <div className="form-check form-switch mb-3">
+                {/* Fecha condicional */}
+                <div className="mb-2 form-check">
                   <input
                     className="form-check-input"
                     type="checkbox"
-                    id="todayCheck"
-                    checked={date === format(new Date(), "yyyy-MM-dd")}
-                    onChange={(e) => {
-                      if (e.target.checked) {
+                    checked={isToday}
+                    onChange={() => {
+                      const checked = !isToday;
+                      setIsToday(checked);
+                      if (checked) {
                         setDate(format(new Date(), "yyyy-MM-dd"));
-                      } else {
-                        setDate(""); // lo dejamos vacío para forzar al user a elegir
                       }
                     }}
+                    id="todayCheck"
                   />
                   <label className="form-check-label" htmlFor="todayCheck">
                     Today
                   </label>
                 </div>
 
-                {/* Date picker si NO es hoy */}
-                {date !== format(new Date(), "yyyy-MM-dd") && (
-                  <div className="mb-3">
+                {!isToday && (
+                  <div className="mb-2">
                     <input
                       type="date"
                       className="form-control bg-dark text-white"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      required
                     />
                   </div>
                 )}
 
                 {/* Prioridad */}
-                <div className="mb-3">
-                  <label className="form-label">Priority</label>
-                  <div className="btn-group w-100" role="group">
-                    {["normal", "high"].map((level) => (
-                      <input
-                        key={level}
-                        type="button"
-                        className={`btn ${
-                          priority === level ? "btn-menta" : "btn-outline-light"
-                        }`}
-                        value={level.charAt(0).toUpperCase() + level.slice(1)}
-                        onClick={() => setPriority(level)}
-                      />
-                    ))}
+                <div className="mb-3 d-flex gap-3">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      id="normal"
+                      name="priority"
+                      value="normal"
+                      checked={priority === "normal"}
+                      onChange={(e) => setPriority(e.target.value)}
+                    />
+                    <label className="form-check-label" htmlFor="normal">
+                      Normal
+                    </label>
+                  </div>
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      id="high"
+                      name="priority"
+                      value="high"
+                      checked={priority === "high"}
+                      onChange={(e) => setPriority(e.target.value)}
+                    />
+                    <label className="form-check-label" htmlFor="high">
+                      High
+                    </label>
                   </div>
                 </div>
 
-                {/* Eliminar (solo si está en modo edición) */}
                 {editingId && (
-                  <button
-                    type="button"
-                    className="btn btn-outline-danger w-100 my-3"
-                    onClick={() => {
-                      handleDelete(editingId);
-                      setShowModal(false);
-                    }}
-                  >
-                    Delete Task
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-outline-warning w-100 mb-2"
+                      onClick={handleSkipToTomorrow}
+                    >
+                      ⏭ Skip to Tomorrow
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger w-100 mb-3"
+                      onClick={() => {
+                        handleDelete(editingId);
+                        setShowModal(false);
+                      }}
+                    >
+                      🗑 Delete Task
+                    </button>
+                  </>
                 )}
 
-                <button className="btn btn-menta w-100" type="submit">
-                  {editingId ? "Save Changes" : "Add Task"}
+                <button type="submit" className="btn btn-menta w-100">
+                  Save Task
                 </button>
               </form>
             </div>

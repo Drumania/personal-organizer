@@ -9,13 +9,13 @@ import {
   doc,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, addDays } from "date-fns";
+import { format, addDays, isBefore, parseISO } from "date-fns";
 import TodoThumb from "@/components/TodoThumb";
 import EventThumb from "@/components/EventThumb";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [todayTasks, setTodayTasks] = useState([]);
+  const [todayTasks, setTodayTasks] = useState({ today: [], tomorrow: [] });
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,11 +23,34 @@ export default function Dashboard() {
   const todayStr = format(today, "yyyy-MM-dd");
   const tomorrowStr = format(addDays(today, 1), "yyyy-MM-dd");
 
+  // Migrar tareas incompletas de días anteriores
+  const migrateOldTasksToToday = async (uid) => {
+    const q = query(
+      collection(db, "todos"),
+      where("userId", "==", uid),
+      where("completed", "==", false)
+    );
+    const snap = await getDocs(q);
+
+    const batchUpdates = snap.docs.filter((docSnap) => {
+      const data = docSnap.data();
+      return isBefore(parseISO(data.date), new Date());
+    });
+
+    await Promise.all(
+      batchUpdates.map((docSnap) =>
+        updateDoc(doc(db, "todos", docSnap.id), { date: todayStr })
+      )
+    );
+  };
+
+  // Fetch de tareas y eventos
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
 
-      // Fetch tasks for today and tomorrow
+      await migrateOldTasksToToday(user.uid);
+
       const todosRef = collection(db, "todos");
       const q1 = query(todosRef, where("userId", "==", user.uid));
       const snap1 = await getDocs(q1);
@@ -40,7 +63,6 @@ export default function Dashboard() {
       const tomorrow = allTasks.filter((t) => t.date === tomorrowStr);
       setTodayTasks({ today, tomorrow });
 
-      // Fetch upcoming events
       const eventsRef = collection(db, "events");
       const futureDate = format(addDays(new Date(), 5), "yyyy-MM-dd");
 
@@ -111,14 +133,9 @@ export default function Dashboard() {
               tasks={sortTasks(todayTasks.today)}
               onToggle={toggleComplete}
             />
-            {/* <TodoThumb
-              title="Tomorrow"
-              tasks={sortTasks(todayTasks.tomorrow)}
-              onToggle={toggleComplete}
-            /> */}
           </section>
 
-          {/* UPCOMING EVENTS */}
+          {/* UPCOMING EVENTS (solo hoy) */}
           <section className="mb-5">
             <h4 className="mb-3">Events</h4>
             {upcomingEvents.filter((e) => e.date === todayStr).length === 0 ? (
