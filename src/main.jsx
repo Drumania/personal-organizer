@@ -9,6 +9,20 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./styles/global.css";
 import "react-calendar/dist/Calendar.css";
 
+// Registro del Service Worker para detectar updates
+import { registerSW } from "virtual:pwa-register";
+
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm("¡Nueva versión disponible! ¿Deseás actualizar ahora?")) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log("App lista para funcionar offline");
+  },
+});
+
 function RootApp() {
   useEffect(() => {
     const splash = document.getElementById("splash-screen");
