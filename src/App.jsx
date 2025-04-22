@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import RoutinesPage from "./pages/RoutinesPage";
 import TodoPage from "./pages/TodoPage";
 import CalendarPage from "./pages/CalendarPage";
 import ShoppingList from "./pages/ShoppingList";
@@ -43,6 +44,14 @@ export default function App() {
               element={
                 <SwipeWrapper>
                   <Dashboard />
+                </SwipeWrapper>
+              }
+            />
+            <Route
+              path="/routines"
+              element={
+                <SwipeWrapper>
+                  <RoutinesPage />
                 </SwipeWrapper>
               }
             />

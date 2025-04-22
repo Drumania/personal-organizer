@@ -13,11 +13,12 @@ export default function LinkBar() {
           Dashboard
         </Link>
       </li>
-      <li className="nav-item opacity-50">
-        <div className="nav-link disabled text-secondary " title="Coming soon">
-          <label>Routines</label>
-        </div>
+      <li className="nav-item">
+        <Link className={`nav-link ${isActive("/routines")}`} to="/routines">
+          Routines
+        </Link>
       </li>
+
       <li className="nav-item">
         <Link className={`nav-link ${isActive("/todos")}`} to="/todos">
           To-do

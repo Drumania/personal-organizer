@@ -6,10 +6,18 @@ import {
   where,
   getDocs,
   updateDoc,
+  getDoc,
   doc,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays, isBefore, parseISO } from "date-fns";
+import {
+  initializeGardenIfNeeded,
+  checkAllTasksCompleted,
+  evaluateGardenAchievements,
+} from "@/utils/gardenService";
+import GardenGrid from "@/components/GardenGrid";
+import { createRoutineTodosIfNeeded } from "@/utils/createRoutineTodosIfNeeded";
 import TodoThumb from "@/components/TodoThumb";
 import EventThumb from "@/components/EventThumb";
 
@@ -17,6 +25,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [todayTasks, setTodayTasks] = useState({ today: [], tomorrow: [] });
   const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [gardenGrid, setGardenGrid] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const today = new Date();
@@ -44,25 +53,28 @@ export default function Dashboard() {
     );
   };
 
-  // Fetch de tareas y eventos
+  // Fetch de tareas, eventos y jardín
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
 
       await migrateOldTasksToToday(user.uid);
 
+      // Jardín 🌱
+      const garden = await initializeGardenIfNeeded(user.uid);
+      setGardenGrid(garden);
+
+      // Fetch tareas
       const todosRef = collection(db, "todos");
       const q1 = query(todosRef, where("userId", "==", user.uid));
       const snap1 = await getDocs(q1);
-      const allTasks = snap1.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const allTasks = snap1.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
       const today = allTasks.filter((t) => t.date === todayStr);
       const tomorrow = allTasks.filter((t) => t.date === tomorrowStr);
       setTodayTasks({ today, tomorrow });
 
+      // Fetch eventos
       const eventsRef = collection(db, "events");
       const futureDate = format(addDays(new Date(), 5), "yyyy-MM-dd");
 
@@ -76,11 +88,59 @@ export default function Dashboard() {
       const events = snap2.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
       setUpcomingEvents(events);
+
+      // Fetch jardín 🌱
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        if (!data.gardenGrid || data.gardenGrid.length === 0) {
+          // Si no tiene jardín, creamos uno vacío 4x4 con sugerencias
+          await updateDoc(userRef, { gardenGrid: initialGarden });
+          setGardenGrid(initialGarden);
+        } else {
+          setGardenGrid(data.gardenGrid);
+        }
+      }
       setLoading(false);
     };
 
     fetchData();
   }, [user]);
+
+  // useEffect(() => {
+  //   const checkAchievements = async () => {
+  //     const updatedGrid = await checkAllTasksCompleted(
+  //       user.uid,
+  //       todayTasks.today,
+  //       todayStr
+  //     );
+  //     if (updatedGrid) {
+  //       setGardenGrid(updatedGrid); // Actualizamos si ganamos punto
+  //     }
+  //   };
+
+  //   if (!loading) {
+  //     checkAchievements();
+  //   }
+  // }, [todayTasks, loading, user]);
+
+  useEffect(() => {
+    const evaluate = async () => {
+      const updated = await evaluateGardenAchievements(user.uid, {
+        tasks: todayTasks.today,
+        streak: 3, // Podés traerlo real si llevás registro
+        routines: [], // Podés traerlas si ya las manejás
+        todayStr,
+      });
+
+      if (updated) setGardenGrid(updated);
+    };
+
+    if (!loading) {
+      evaluate();
+    }
+  }, [todayTasks, loading, user]);
 
   const sortTasks = (tasks) =>
     tasks.slice().sort((a, b) => {
@@ -124,6 +184,17 @@ export default function Dashboard() {
             <div style={{ fontSize: "1.25rem" }}>
               {format(new Date(), "EEEE, MMMM d, yyyy")}
             </div>
+          </div>
+
+          <div
+            className="gap-3 px-4 py-3 rounded-3 mb-4"
+            style={{
+              color: "var(--menta-color)",
+              fontWeight: "500",
+            }}
+          >
+            <h2>My Garden 🌿</h2>
+            <GardenGrid gardenGrid={gardenGrid} />
           </div>
 
           {/* TASKS */}

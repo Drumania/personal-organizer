@@ -2,7 +2,7 @@
 import { useSwipeable } from "react-swipeable";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const routes = ["/", "/todos", "/calendar", "/shopping"];
+const routes = ["/", "/routines", "/todos", "/calendar", "/shopping"];
 
 export default function SwipeWrapper({ children }) {
   const navigate = useNavigate();

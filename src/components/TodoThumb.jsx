@@ -37,6 +37,10 @@ export default function TodoThumb({
               )}
             </div>
 
+            {task.type === "routine" && (
+              <span className="badge bg-success ms-2">Routine</span>
+            )}
+
             {onEdit && (
               <button
                 className="btn btn-sm text-white"
