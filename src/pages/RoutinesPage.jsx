@@ -7,6 +7,9 @@ import {
   collection,
   getDocs,
   addDoc,
+  query,
+  where,
+  deleteDoc,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,18 +27,16 @@ export default function RoutinesPage() {
   const [filter, setFilter] = useState("all");
   const [message, setMessage] = useState("");
 
-  // Fetch public routines from Firestore
+  // Fetch public and user routines
   useEffect(() => {
-    const fetchPublicRoutines = async () => {
+    const fetchData = async () => {
       const routinesSnap = await getDocs(collection(db, "public_routines"));
       const routines = routinesSnap.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
       setPublicRoutines(routines);
-    };
 
-    const fetchUserRoutines = async () => {
       const userRef = doc(db, "users", user.uid);
       const snap = await getDoc(userRef);
       if (snap.exists()) {
@@ -44,8 +45,7 @@ export default function RoutinesPage() {
       }
     };
 
-    fetchPublicRoutines();
-    fetchUserRoutines();
+    fetchData();
   }, [user]);
 
   const addRoutine = async (routine) => {
@@ -70,7 +70,37 @@ export default function RoutinesPage() {
     }
     setMessage(`"${routine.name}" added to your routines.`);
     setTimeout(() => setMessage(""), 3000);
+    setLoading(false);
+  };
 
+  const removeRoutineAndTasks = async (routineName) => {
+    setLoading(true);
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const updatedRoutines = (data.myRoutines || []).filter(
+        (r) => r.name !== routineName
+      );
+      await updateDoc(userRef, { myRoutines: updatedRoutines });
+      setMyRoutines(updatedRoutines);
+    }
+
+    // 🔥 Borrar tareas asociadas a la rutina
+    const q = query(
+      collection(db, "todos"),
+      where("userId", "==", user.uid),
+      where("type", "==", "routine"),
+      where("title", "==", routineName)
+    );
+    const snapTasks = await getDocs(q);
+    const deletions = snapTasks.docs.map((docSnap) =>
+      deleteDoc(doc(db, "todos", docSnap.id))
+    );
+    await Promise.all(deletions);
+
+    setMessage(`"${routineName}" removed and tasks deleted.`);
+    setTimeout(() => setMessage(""), 3000);
     setLoading(false);
   };
 
@@ -95,7 +125,6 @@ export default function RoutinesPage() {
       setMyRoutines(updatedRoutines);
     }
 
-    // Si es pública, también agregar a public_routines
     if (isPublic) {
       await addDoc(collection(db, "public_routines"), {
         name: newRoutineTitle,
@@ -103,7 +132,6 @@ export default function RoutinesPage() {
         createdAt: new Date().toISOString(),
       });
 
-      // Refetch de public_routines
       const routinesSnap = await getDocs(collection(db, "public_routines"));
       const routines = routinesSnap.docs.map((doc) => ({
         id: doc.id,
@@ -113,33 +141,13 @@ export default function RoutinesPage() {
     }
 
     setMessage("Routine created successfully!");
-
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
-
+    setTimeout(() => setMessage(""), 3000);
     setNewRoutineTitle("");
     setNewRoutineFrequency("");
     setIsPublic(false);
     setShowModal(false);
   };
 
-  const removeRoutine = async (routineName) => {
-    setLoading(true);
-    const userRef = doc(db, "users", user.uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      const updatedRoutines = (data.myRoutines || []).filter(
-        (r) => r.name !== routineName
-      );
-      await updateDoc(userRef, { myRoutines: updatedRoutines });
-      setMyRoutines(updatedRoutines);
-    }
-    setLoading(false);
-  };
-
-  // Filtrado
   const filteredRoutines = publicRoutines.filter((routine) => {
     if (filter === "all") return true;
     const isAdded = myRoutines.some((r) => r.name === routine.name);
@@ -164,45 +172,22 @@ export default function RoutinesPage() {
       )}
 
       <div className="d-flex gap-2 mb-4">
-        <button
-          className={`btn-reset ${
-            filter === "all" ? "btn-menta" : "btn-outline-light"
-          }`}
-          onClick={() => setFilter("all")}
-        >
-          All
-        </button>
-        <button
-          className={`btn-reset ${
-            filter === "added" ? "btn-menta" : "btn-outline-light"
-          }`}
-          onClick={() => setFilter("added")}
-        >
-          Added
-        </button>
-        <button
-          className={`btn-reset ${
-            filter === "not-added" ? "btn-menta" : "btn-outline-light"
-          }`}
-          onClick={() => setFilter("not-added")}
-        >
-          Not Added
-        </button>
+        {["all", "added", "not-added"].map((f) => (
+          <button
+            key={f}
+            className={`btn-reset ${
+              filter === f ? "btn-menta" : "btn-outline-light"
+            }`}
+            onClick={() => setFilter(f)}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
       </div>
 
       <div className="row g-3 mb-4">
         {filteredRoutines.map((routine, index) => {
           const isAdded = myRoutines.some((r) => r.name === routine.name);
-
-          const handleClick = () => {
-            if (isAdded) {
-              if (confirm(`Remove "${routine.name}" from your routines?`)) {
-                removeRoutine(routine.name);
-              }
-            } else {
-              addRoutine(routine);
-            }
-          };
 
           return (
             <div className="col-6" key={index}>
@@ -227,38 +212,7 @@ export default function RoutinesPage() {
                           `Remove "${routine.name}" and delete its tasks?`
                         );
                         if (!confirm) return;
-
-                        const userRef = doc(db, "users", user.uid);
-                        const snap = await getDoc(userRef);
-                        if (snap.exists()) {
-                          const data = snap.data();
-                          const updatedRoutines = (
-                            data.myRoutines || []
-                          ).filter((r) => r.name !== routine.name);
-                          await updateDoc(userRef, {
-                            myRoutines: updatedRoutines,
-                          });
-                          setMyRoutines(updatedRoutines);
-                        }
-
-                        // 🔥 Borra las tareas de Firestore directamente
-                        const q = query(
-                          collection(db, "todos"),
-                          where("userId", "==", user.uid),
-                          where("type", "==", "routine"),
-                          where("title", "==", routine.name)
-                        );
-                        const snapTasks = await getDocs(q);
-                        const deletions = snapTasks.docs.map((docSnap) =>
-                          deleteDoc(doc(db, "todos", docSnap.id))
-                        );
-                        await Promise.all(deletions);
-
-                        // 🔥 Mostrar confirmación
-                        setMessage(
-                          `"${routine.name}" removed and tasks deleted.`
-                        );
-                        setTimeout(() => setMessage(""), 3000);
+                        await removeRoutineAndTasks(routine.name);
                       }
                     }}
                     disabled={loading}
