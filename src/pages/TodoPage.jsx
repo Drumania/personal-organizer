@@ -53,6 +53,8 @@ export default function TodoPage() {
     const routines = snap.data().myRoutines || [];
     const todayDate = new Date();
 
+    let created = false; // Solo refetch si se crea una nueva
+
     for (const routine of routines) {
       const alreadyExists = currentTasks.some(
         (t) =>
@@ -102,14 +104,20 @@ export default function TodoPage() {
         };
 
         await addDoc(collection(db, "todos"), newTask);
+        created = true;
       }
     }
 
-    // 🔥 Agregá esto: definimos q acá para refetch
-    const q = query(collection(db, "todos"), where("userId", "==", user.uid));
-    const refetch = await getDocs(q);
-    const updated = refetch.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    setTasks(updated);
+    // Refetch solo si se creó algo
+    if (created) {
+      const q = query(collection(db, "todos"), where("userId", "==", user.uid));
+      const refetch = await getDocs(q);
+      const updated = refetch.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTasks(updated);
+    }
   };
 
   const handleAddOrUpdate = async (e) => {

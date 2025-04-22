@@ -12,6 +12,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
+import RoutineThumb from "@/components/RoutineThumb";
 
 const frequencyOptions = ["Daily", "Weekly", "Monthly"];
 
@@ -19,7 +20,7 @@ export default function RoutinesPage() {
   const { user } = useAuth();
   const [myRoutines, setMyRoutines] = useState([]);
   const [publicRoutines, setPublicRoutines] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingRoutine, setLoadingRoutine] = useState(null); // Nuevo: manejar loading por rutina
   const [showModal, setShowModal] = useState(false);
   const [newRoutineTitle, setNewRoutineTitle] = useState("");
   const [newRoutineFrequency, setNewRoutineFrequency] = useState("");
@@ -50,7 +51,7 @@ export default function RoutinesPage() {
 
   // Add routine
   const addRoutine = async (routine) => {
-    setLoading(true);
+    setLoadingRoutine(routine.name); // Loading solo para esta rutina
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
     if (snap.exists()) {
@@ -71,12 +72,12 @@ export default function RoutinesPage() {
     }
     setMessage(`"${routine.name}" added to your routines.`);
     setTimeout(() => setMessage(""), 3000);
-    setLoading(false);
+    setLoadingRoutine(null); // Fin loading
   };
 
   // Remove routine + tasks
   const removeRoutine = async (routineName) => {
-    setLoading(true);
+    setLoadingRoutine(routineName); // Loading solo para esta rutina
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
     if (snap.exists()) {
@@ -103,15 +104,18 @@ export default function RoutinesPage() {
 
     setMessage(`"${routineName}" removed and tasks deleted.`);
     setTimeout(() => setMessage(""), 3000);
-    setLoading(false);
+    setLoadingRoutine(null); // Fin loading
   };
 
   // Filtrado
   const filteredRoutines = publicRoutines.filter((routine) => {
-    if (filter === "all") return true;
     const isAdded = myRoutines.some((r) => r.name === routine.name);
+
+    if (filter === "all") return true;
     if (filter === "added") return isAdded;
     if (filter === "not-added") return !isAdded;
+    if (filter === "mine") return routine.userId === user.uid; // 🔥 Asegurate de guardar userId al crear
+
     return true;
   });
 
@@ -132,7 +136,7 @@ export default function RoutinesPage() {
 
       {/* Filtro */}
       <div className="d-flex gap-2 mb-4">
-        {["all", "added", "not-added"].map((f) => (
+        {["all", "added", "not-added", "mine"].map((f) => (
           <button
             key={f}
             className={`btn-reset ${
@@ -140,7 +144,13 @@ export default function RoutinesPage() {
             }`}
             onClick={() => setFilter(f)}
           >
-            {f === "all" ? "All" : f === "added" ? "Added" : "Not Added"}
+            {f === "all"
+              ? "All"
+              : f === "added"
+              ? "Added"
+              : f === "not-added"
+              ? "Not Added"
+              : "Created by Me"}
           </button>
         ))}
       </div>
@@ -151,38 +161,28 @@ export default function RoutinesPage() {
           const isAdded = myRoutines.some((r) => r.name === routine.name);
 
           return (
-            <div className="col-6" key={index}>
-              <div className="card bg-dark text-white h-100">
-                <div className="card-body d-flex flex-column justify-content-between">
-                  <h5 className="card-title mb-2">{routine.name}</h5>
-                  <p
-                    className="text-secondary mb-3"
-                    style={{ fontSize: "0.9rem" }}
-                  >
-                    {routine.frequency}
-                  </p>
-                  <button
-                    className={`btn mt-auto ${
-                      isAdded ? "btn-outline-success" : "btn-menta"
-                    }`}
-                    onClick={async () => {
-                      if (!isAdded) {
-                        await addRoutine(routine);
-                      } else {
-                        const confirm = window.confirm(
-                          `Remove "${routine.name}" and delete its tasks?`
-                        );
-                        if (!confirm) return;
-                        await removeRoutine(routine.name);
-                      }
-                    }}
-                    disabled={loading}
-                  >
-                    {isAdded ? "Added" : "Add"}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <RoutineThumb
+              key={index}
+              routine={routine}
+              isAdded={isAdded}
+              loading={loadingRoutine === routine.name}
+              onClick={async () => {
+                setLoadingRoutine(routine.name);
+                if (!isAdded) {
+                  await addRoutine(routine);
+                } else {
+                  const confirm = window.confirm(
+                    `Remove "${routine.name}" and delete its tasks?`
+                  );
+                  if (!confirm) {
+                    setLoadingRoutine(null);
+                    return;
+                  }
+                  await removeRoutine(routine.name);
+                }
+                setLoadingRoutine(null);
+              }}
+            />
           );
         })}
       </div>
@@ -231,6 +231,7 @@ export default function RoutinesPage() {
                       name: newRoutineTitle,
                       frequency: newRoutineFrequency,
                       createdAt: new Date().toISOString(),
+                      userId: user.uid,
                     });
                     const routinesSnap = await getDocs(
                       collection(db, "public_routines")

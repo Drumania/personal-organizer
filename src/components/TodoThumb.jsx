@@ -32,14 +32,13 @@ export default function TodoThumb({
                 onChange={() => onToggle(task)}
               />
               <span>{task.title}</span>
+              {task.type === "routine" && (
+                <span className="badge bg-success ms-2">Routine</span>
+              )}
               {task.priority === "high" && (
                 <span className="badge bg-danger ms-2">High</span>
               )}
             </div>
-
-            {task.type === "routine" && (
-              <span className="badge bg-success ms-2">Routine</span>
-            )}
 
             {onEdit && (
               <button
