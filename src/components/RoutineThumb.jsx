@@ -1,20 +1,6 @@
-export default function RoutineThumb({
-  routine,
-  isAdded,
-  loading,
-  onAdd,
-  onRemove,
-}) {
+export default function RoutineThumb({ routine, isAdded, loading, onClick }) {
   const handleClick = async () => {
-    if (!isAdded) {
-      await onAdd(routine);
-    } else {
-      const confirm = window.confirm(
-        `Remove "${routine.name}" and delete its tasks?`
-      );
-      if (!confirm) return;
-      await onRemove(routine.name);
-    }
+    await onClick(routine);
   };
 
   return (
@@ -22,9 +8,10 @@ export default function RoutineThumb({
       <div
         className="card text-white h-100 border-0 shadow-sm"
         style={{
-          background: "linear-gradient(135deg, #1f1f1f, #2c2c2c)",
+          background: isAdded ? "#263242" : "#202b39",
           borderRadius: "1rem",
-          transition: "transform 0.2s ease",
+          border: isAdded ? "2px solid var(--menta-color)" : "none",
+          transition: "transform 0.2s ease, background 0.3s ease",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "scale(1.03)";
@@ -34,7 +21,6 @@ export default function RoutineThumb({
         }}
       >
         <div className="card-body d-flex flex-column justify-content-between p-4">
-          {/* Icono decorativo */}
           <div
             className="d-flex align-items-center justify-content-center mb-3"
             style={{
@@ -50,7 +36,6 @@ export default function RoutineThumb({
             <i className="bi bi-stars"></i>
           </div>
 
-          {/* Título */}
           <h5
             className="card-title mb-2 text-center"
             style={{ fontWeight: "600", fontSize: "1.1rem" }}
@@ -58,7 +43,6 @@ export default function RoutineThumb({
             {routine.name}
           </h5>
 
-          {/* Frecuencia */}
           <p
             className="text-secondary text-center mb-4"
             style={{ fontSize: "0.85rem" }}
@@ -66,15 +50,14 @@ export default function RoutineThumb({
             {routine.frequency}
           </p>
 
-          {/* Botón */}
           <button
             className={`btn ${
-              isAdded ? "btn-outline-success" : "btn-menta"
+              isAdded ? "btn-outline-menta" : "btn-menta"
             } rounded-pill w-100`}
             onClick={handleClick}
             disabled={loading}
           >
-            {isAdded ? "✓ Added" : "+ Add"}
+            {isAdded ? "Remove" : "Add"}
           </button>
         </div>
       </div>
