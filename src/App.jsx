@@ -15,7 +15,11 @@ export default function App() {
   const { user, loading } = useAuth();
 
   if (loading)
-    return <div className="text-center mt-5 text-white">Loading...</div>;
+    return (
+      <div className="text-center mt-5 text-white">
+        <div className="loader-menta"></div>
+      </div>
+    );
 
   return (
     <>

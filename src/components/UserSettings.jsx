@@ -50,7 +50,7 @@ export default function UserSettings() {
       <h2 className="mb-4">User Settings</h2>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="loader-menta"></div>
       ) : (
         <form onSubmit={(e) => e.preventDefault()}>
           {/* Imagen de perfil */}

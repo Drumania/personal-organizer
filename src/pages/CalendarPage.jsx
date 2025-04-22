@@ -178,7 +178,7 @@ export default function CalendarPage() {
           <h5 className="mb-4">Events for {format(selectedDate, "PPP")}</h5>
 
           {loading ? (
-            <p>Loading...</p>
+            <div className="loader-menta"></div>
           ) : events.length === 0 ? (
             <p className="text-secondary">No events this day.</p>
           ) : (

@@ -122,7 +122,7 @@ export default function TodoPage() {
       </div>
 
       {loading ? (
-        <p>Loading tasks...</p>
+        <div className="loader-menta"></div>
       ) : (
         <>
           <TodoThumb

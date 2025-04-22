@@ -109,7 +109,7 @@ export default function Dashboard() {
   return (
     <div className="container py-4 text-white">
       {loading ? (
-        <p>Loading...</p>
+        <div className="loader-menta"></div>
       ) : (
         <>
           {/* Fecha actual */}
