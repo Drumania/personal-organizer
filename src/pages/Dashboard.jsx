@@ -17,7 +17,7 @@ import {
   evaluateGardenAchievements,
 } from "@/utils/gardenService";
 import GardenGrid from "@/components/GardenGrid";
-import { createRoutineTodosIfNeeded } from "@/utils/createRoutineTodosIfNeeded";
+
 import TodoThumb from "@/components/TodoThumb";
 import EventThumb from "@/components/EventThumb";
 

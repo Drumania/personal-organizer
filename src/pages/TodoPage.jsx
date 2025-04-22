@@ -9,13 +9,11 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  getDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, addDays } from "date-fns";
 import TodoThumb from "@/components/TodoThumb";
-import { createRoutineTodosIfNeeded } from "@/utils/createRoutineTodosIfNeeded";
 
 export default function TodoPage() {
   const { user } = useAuth();
@@ -34,12 +32,6 @@ export default function TodoPage() {
 
   const fetchTasks = async () => {
     setLoading(true);
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
-    const routines = userSnap.exists() ? userSnap.data().routines || [] : [];
-
-    await createRoutineTodosIfNeeded(user.uid, routines);
-
     const q = query(collection(db, "todos"), where("userId", "==", user.uid));
     const snap = await getDocs(q);
     const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -83,53 +75,7 @@ export default function TodoPage() {
 
   const toggleComplete = async (task) => {
     const updated = !task.completed;
-
     await updateDoc(doc(db, "todos", task.id), { completed: updated });
-
-    // Si es rutina, actualizar rutina Y jardín si cumple goal
-    if (task.type === "routine" && updated) {
-      const userRef = doc(db, "users", user.uid);
-      const snap = await getDoc(userRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        const today = format(new Date(), "yyyy-MM-dd");
-
-        const updatedRoutines = (data.routines || []).map((r) => {
-          if (r.name === task.routineName && !r.doneToday) {
-            return {
-              ...r,
-              streak: r.streak + 1,
-              doneToday: true,
-              lastCompletedDate: today,
-            };
-          }
-          return r;
-        });
-
-        // ¿Completó la rutina?
-        const completedRoutine = updatedRoutines.find(
-          (r) => r.name === task.routineName && r.streak >= r.goal
-        );
-
-        let gardenGrid = data.gardenGrid || [];
-
-        if (completedRoutine) {
-          const firstEmpty = gardenGrid.findIndex((c) => c.level === 0);
-          if (firstEmpty !== -1) {
-            gardenGrid[firstEmpty] = {
-              level: completedRoutine.level,
-              title: completedRoutine.name,
-              date: today,
-              detail: `Completed ${completedRoutine.name}`,
-            };
-          }
-          await updateDoc(userRef, { routines: updatedRoutines, gardenGrid });
-          console.log(`🌸 Garden updated with ${completedRoutine.name}!`);
-        } else {
-          await updateDoc(userRef, { routines: updatedRoutines });
-        }
-      }
-    }
 
     setTasks((prevTasks) =>
       prevTasks.map((t) =>
@@ -210,6 +156,7 @@ export default function TodoPage() {
         </>
       )}
 
+      {/* Modal de tareas */}
       {showModal && (
         <div
           className="custom-modal-backdrop"
