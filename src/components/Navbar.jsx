@@ -85,9 +85,8 @@ export default function Navbar() {
             <Link className="nav-link py-3" to="/settings">
               Settings
             </Link>
-            <hr />
             <button
-              className="btn btn-sm btn-danger w-100 "
+              className="btn btn-sm btn-danger w-100 mt-3"
               onClick={handleLogout}
             >
               Logout

@@ -147,6 +147,7 @@ select:focus {
 .navbar {
   color: var(--text);
   /* position: sticky; */
+
   top: 0;
   z-index: 1000;
   backdrop-filter: blur(10px);
@@ -483,6 +484,7 @@ a:hover {
   background-color: var(--panel);
   height: 100px;
   display: flex;
+  border-radius: 3px;
   justify-content: center;
   align-items: center;
   text-decoration: none;
