@@ -8,11 +8,12 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, addDays } from "date-fns";
+import { format, addDays, isSameWeek, isSameMonth } from "date-fns";
 import TodoThumb from "@/components/TodoThumb";
 
 export default function TodoPage() {
@@ -32,11 +33,83 @@ export default function TodoPage() {
 
   const fetchTasks = async () => {
     setLoading(true);
+
     const q = query(collection(db, "todos"), where("userId", "==", user.uid));
     const snap = await getDocs(q);
     const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     setTasks(data);
+
+    // Luego de cargar tareas, asegurate que las de rutina estén creadas
+    await handleRoutineTasks(data);
+
     setLoading(false);
+  };
+
+  const handleRoutineTasks = async (currentTasks) => {
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
+
+    const routines = snap.data().myRoutines || [];
+    const todayDate = new Date();
+
+    for (const routine of routines) {
+      const alreadyExists = currentTasks.some(
+        (t) =>
+          t.title === routine.name &&
+          t.type === "routine" &&
+          t.date === today &&
+          !t.completed
+      );
+
+      if (routine.paused || alreadyExists) continue;
+
+      let shouldCreate = false;
+
+      if (routine.frequency === "Daily") {
+        shouldCreate = true;
+      } else if (
+        routine.frequency === "Weekly" &&
+        !currentTasks.some(
+          (t) =>
+            t.title === routine.name &&
+            t.type === "routine" &&
+            isSameWeek(new Date(t.date), todayDate)
+        )
+      ) {
+        shouldCreate = true;
+      } else if (
+        routine.frequency === "Monthly" &&
+        !currentTasks.some(
+          (t) =>
+            t.title === routine.name &&
+            t.type === "routine" &&
+            isSameMonth(new Date(t.date), todayDate)
+        )
+      ) {
+        shouldCreate = true;
+      }
+
+      if (shouldCreate) {
+        const newTask = {
+          userId: user.uid,
+          title: routine.name,
+          priority: "normal",
+          completed: false,
+          date: today,
+          type: "routine",
+          createdAt: serverTimestamp(),
+        };
+
+        await addDoc(collection(db, "todos"), newTask);
+      }
+    }
+
+    // 🔥 Agregá esto: definimos q acá para refetch
+    const q = query(collection(db, "todos"), where("userId", "==", user.uid));
+    const refetch = await getDocs(q);
+    const updated = refetch.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setTasks(updated);
   };
 
   const handleAddOrUpdate = async (e) => {
@@ -155,7 +228,6 @@ export default function TodoPage() {
           />
         </>
       )}
-
       {/* Modal de tareas */}
       {showModal && (
         <div

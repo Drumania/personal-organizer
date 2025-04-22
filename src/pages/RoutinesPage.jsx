@@ -124,6 +124,21 @@ export default function RoutinesPage() {
     setShowModal(false);
   };
 
+  const removeRoutine = async (routineName) => {
+    setLoading(true);
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const updatedRoutines = (data.myRoutines || []).filter(
+        (r) => r.name !== routineName
+      );
+      await updateDoc(userRef, { myRoutines: updatedRoutines });
+      setMyRoutines(updatedRoutines);
+    }
+    setLoading(false);
+  };
+
   // Filtrado
   const filteredRoutines = publicRoutines.filter((routine) => {
     if (filter === "all") return true;
@@ -179,8 +194,18 @@ export default function RoutinesPage() {
         {filteredRoutines.map((routine, index) => {
           const isAdded = myRoutines.some((r) => r.name === routine.name);
 
+          const handleClick = () => {
+            if (isAdded) {
+              if (confirm(`Remove "${routine.name}" from your routines?`)) {
+                removeRoutine(routine.name);
+              }
+            } else {
+              addRoutine(routine);
+            }
+          };
+
           return (
-            <div className="col-6 col-lg-3" key={index}>
+            <div className="col-6" key={index}>
               <div className="card bg-dark text-white h-100">
                 <div className="card-body d-flex flex-column justify-content-between">
                   <h5 className="card-title mb-2">{routine.name}</h5>
@@ -192,10 +217,51 @@ export default function RoutinesPage() {
                   </p>
                   <button
                     className={`btn mt-auto ${
-                      isAdded ? "btn-outline-menta" : "btn-menta"
+                      isAdded ? "btn-outline-success" : "btn-menta"
                     }`}
-                    onClick={() => !isAdded && addRoutine(routine)}
-                    // disabled={loading || isAdded}
+                    onClick={async () => {
+                      if (!isAdded) {
+                        await addRoutine(routine);
+                      } else {
+                        const confirm = window.confirm(
+                          `Remove "${routine.name}" and delete its tasks?`
+                        );
+                        if (!confirm) return;
+
+                        const userRef = doc(db, "users", user.uid);
+                        const snap = await getDoc(userRef);
+                        if (snap.exists()) {
+                          const data = snap.data();
+                          const updatedRoutines = (
+                            data.myRoutines || []
+                          ).filter((r) => r.name !== routine.name);
+                          await updateDoc(userRef, {
+                            myRoutines: updatedRoutines,
+                          });
+                          setMyRoutines(updatedRoutines);
+                        }
+
+                        // 🔥 Borra las tareas de Firestore directamente
+                        const q = query(
+                          collection(db, "todos"),
+                          where("userId", "==", user.uid),
+                          where("type", "==", "routine"),
+                          where("title", "==", routine.name)
+                        );
+                        const snapTasks = await getDocs(q);
+                        const deletions = snapTasks.docs.map((docSnap) =>
+                          deleteDoc(doc(db, "todos", docSnap.id))
+                        );
+                        await Promise.all(deletions);
+
+                        // 🔥 Mostrar confirmación
+                        setMessage(
+                          `"${routine.name}" removed and tasks deleted.`
+                        );
+                        setTimeout(() => setMessage(""), 3000);
+                      }
+                    }}
+                    disabled={loading}
                   >
                     {isAdded ? "Added" : "Add"}
                   </button>
