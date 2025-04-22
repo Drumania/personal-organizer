@@ -29,7 +29,7 @@ export default function RoutinesPage() {
 
   // Fetch public and user routines
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchRoutines = async () => {
       const routinesSnap = await getDocs(collection(db, "public_routines"));
       const routines = routinesSnap.docs.map((doc) => ({
         id: doc.id,
@@ -45,9 +45,10 @@ export default function RoutinesPage() {
       }
     };
 
-    fetchData();
+    fetchRoutines();
   }, [user]);
 
+  // Add routine
   const addRoutine = async (routine) => {
     setLoading(true);
     const userRef = doc(db, "users", user.uid);
@@ -73,7 +74,8 @@ export default function RoutinesPage() {
     setLoading(false);
   };
 
-  const removeRoutineAndTasks = async (routineName) => {
+  // Remove routine + tasks
+  const removeRoutine = async (routineName) => {
     setLoading(true);
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
@@ -86,7 +88,7 @@ export default function RoutinesPage() {
       setMyRoutines(updatedRoutines);
     }
 
-    // 🔥 Borrar tareas asociadas a la rutina
+    // Delete related tasks
     const q = query(
       collection(db, "todos"),
       where("userId", "==", user.uid),
@@ -104,50 +106,7 @@ export default function RoutinesPage() {
     setLoading(false);
   };
 
-  const handleCreateRoutine = async (e) => {
-    e.preventDefault();
-    const routine = {
-      name: newRoutineTitle,
-      frequency: newRoutineFrequency,
-      public: isPublic,
-      createdAt: new Date().toISOString(),
-      streak: 0,
-      paused: false,
-    };
-
-    const userRef = doc(db, "users", user.uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      const updatedRoutines = data.myRoutines || [];
-      updatedRoutines.push(routine);
-      await updateDoc(userRef, { myRoutines: updatedRoutines });
-      setMyRoutines(updatedRoutines);
-    }
-
-    if (isPublic) {
-      await addDoc(collection(db, "public_routines"), {
-        name: newRoutineTitle,
-        frequency: newRoutineFrequency,
-        createdAt: new Date().toISOString(),
-      });
-
-      const routinesSnap = await getDocs(collection(db, "public_routines"));
-      const routines = routinesSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPublicRoutines(routines);
-    }
-
-    setMessage("Routine created successfully!");
-    setTimeout(() => setMessage(""), 3000);
-    setNewRoutineTitle("");
-    setNewRoutineFrequency("");
-    setIsPublic(false);
-    setShowModal(false);
-  };
-
+  // Filtrado
   const filteredRoutines = publicRoutines.filter((routine) => {
     if (filter === "all") return true;
     const isAdded = myRoutines.some((r) => r.name === routine.name);
@@ -171,6 +130,7 @@ export default function RoutinesPage() {
         </div>
       )}
 
+      {/* Filtro */}
       <div className="d-flex gap-2 mb-4">
         {["all", "added", "not-added"].map((f) => (
           <button
@@ -180,11 +140,12 @@ export default function RoutinesPage() {
             }`}
             onClick={() => setFilter(f)}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {f === "all" ? "All" : f === "added" ? "Added" : "Not Added"}
           </button>
         ))}
       </div>
 
+      {/* Rutinas públicas */}
       <div className="row g-3 mb-4">
         {filteredRoutines.map((routine, index) => {
           const isAdded = myRoutines.some((r) => r.name === routine.name);
@@ -212,7 +173,7 @@ export default function RoutinesPage() {
                           `Remove "${routine.name}" and delete its tasks?`
                         );
                         if (!confirm) return;
-                        await removeRoutineAndTasks(routine.name);
+                        await removeRoutine(routine.name);
                       }
                     }}
                     disabled={loading}
@@ -243,7 +204,53 @@ export default function RoutinesPage() {
                 ></button>
               </div>
 
-              <form onSubmit={handleCreateRoutine}>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const routine = {
+                    name: newRoutineTitle,
+                    frequency: newRoutineFrequency,
+                    public: isPublic,
+                    createdAt: new Date().toISOString(),
+                    streak: 0,
+                    paused: false,
+                  };
+
+                  const userRef = doc(db, "users", user.uid);
+                  const snap = await getDoc(userRef);
+                  if (snap.exists()) {
+                    const data = snap.data();
+                    const updatedRoutines = data.myRoutines || [];
+                    updatedRoutines.push(routine);
+                    await updateDoc(userRef, { myRoutines: updatedRoutines });
+                    setMyRoutines(updatedRoutines);
+                  }
+
+                  if (isPublic) {
+                    await addDoc(collection(db, "public_routines"), {
+                      name: newRoutineTitle,
+                      frequency: newRoutineFrequency,
+                      createdAt: new Date().toISOString(),
+                    });
+                    const routinesSnap = await getDocs(
+                      collection(db, "public_routines")
+                    );
+                    const routines = routinesSnap.docs.map((doc) => ({
+                      id: doc.id,
+                      ...doc.data(),
+                    }));
+                    setPublicRoutines(routines);
+                  }
+
+                  setMessage("Routine created successfully!");
+                  setTimeout(() => setMessage(""), 3000);
+
+                  setNewRoutineTitle("");
+                  setNewRoutineFrequency("");
+                  setIsPublic(false);
+                  setShowModal(false);
+                }}
+              >
                 <div className="mb-3">
                   <input
                     type="text"
