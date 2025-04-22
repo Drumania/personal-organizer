@@ -186,6 +186,22 @@ select:focus {
   z-index: 999;
 }
 
+.btn-reset {
+  background-color: transparent;
+  color:var(--white-color)
+  font-weight: bold;
+  border: none;
+  font-size: 1rem;
+  padding: 5px 10px;
+  height: 46px;
+  line-height: 38px;
+}
+.btn-menta:hover,
+.btn-menta:active {
+  background-color: var(--dark-menta-color);
+  border: none;
+}
+
 .btn-menta {
   background-color: var(--dark-menta-color);
   color: var(--text);
@@ -201,6 +217,25 @@ select:focus {
 .btn-menta:active {
   background-color: var(--menta-color);
   border: none;
+}
+
+.btn-outline-menta {
+  background-color: transparent;
+  color: var(--dark-menta-color);
+  border: 1px solid var(--dark-menta-color) !important;
+  font-weight: bold;
+  border: none;
+  font-size: 1rem;
+  padding: 5px 10px;
+  height: 46px;
+  line-height: 38px;
+}
+
+.btn-outline-menta:hover,
+.btn-outline-menta:active {
+  background-color: var(--dark-menta-color);
+  color: var(--text);
+  border: 1px solid var(--dark-menta-color);
 }
 
 .btn-outline-light:hover {
