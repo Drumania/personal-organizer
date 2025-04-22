@@ -1,11 +1,11 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import TodoPage from "./pages/TodoPage";
 import CalendarPage from "./pages/CalendarPage";
 import ShoppingList from "./pages/ShoppingList";
 import { useAuth } from "./contexts/AuthContext";
-import Navbar from "@/components/Navbar"; // asegurate del path
+import Navbar from "@/components/Navbar";
 import LinkBar from "./components/LinkBar";
 import UserSettings from "./components/UserSettings";
 import NotificationWatcher from "@/components/NotificationWatcher";
@@ -13,6 +13,7 @@ import SwipeWrapper from "./components/SwipeWrapper";
 
 export default function App() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading)
     return (
@@ -26,7 +27,8 @@ export default function App() {
       {user && (
         <>
           <Navbar />
-          <LinkBar />
+          {/* Ocultar LinkBar en la ruta /settings */}
+          {location.pathname !== "/settings" && <LinkBar />}
           <NotificationWatcher />
         </>
       )}

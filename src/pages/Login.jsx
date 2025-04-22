@@ -45,16 +45,32 @@ export default function Login() {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-dark text-white">
-      <div
-        className="card p-4 shadow-lg"
-        style={{ width: "100%", maxWidth: 400 }}
-      >
+    <div className="d-flex justify-content-center align-items-center vh-100 text-white">
+      <div className="p-4" style={{ width: "100%", maxWidth: 400 }}>
+        <h3 className="text-center mb-3">
+          <img src={"logo.png"} width="200px" className="mx-auto" />
+          <hr />
+        </h3>
+
+        <button
+          type="button"
+          className="btn btn-google w-100 my-4 "
+          onClick={handleGoogle}
+        >
+          <img
+            src="https://developers.google.com/identity/images/g-logo.png"
+            alt="Google"
+            style={{ width: "20px", height: "20px", marginRight: "10px" }}
+          />
+          Continue with Google
+        </button>
+
+        {errorMsg && <div className="alert alert-danger">{errorMsg}</div>}
+
+        <hr />
         <h3 className="text-center mb-3">
           {isLogin ? "Login" : "Create Account"}
         </h3>
-
-        {errorMsg && <div className="alert alert-danger">{errorMsg}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group mb-3">
@@ -79,21 +95,14 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="btn btn-menta w-100 mb-2">
+          <button type="submit" className="btn btn-menta w-100 mb-5">
             {isLogin ? "Login" : "Sign up"}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-outline-light w-100 mb-3"
-            onClick={handleGoogle}
-          >
-            Continue with Google
           </button>
 
           <div className="text-center">
             <small>
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+              <br />
               <button
                 type="button"
                 className="btn btn-link p-0 text-info"

@@ -208,6 +208,26 @@ select:focus {
   color: #000 !important;
 }
 
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #555;
+  border: 1px solid #ddd;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.btn-google:hover {
+  background-color: #f7f7f7;
+  color: #333;
+}
+
 /* to dos */
 /* Ocultamos el checkbox real */
 input[type="checkbox"].custom-check {
