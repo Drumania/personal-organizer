@@ -188,7 +188,7 @@ select:focus {
 
 .btn-reset {
   background-color: transparent;
-  color:var(--white-color)
+  color: var(--white-color);
   font-weight: bold;
   border: none;
   font-size: 1rem;
@@ -600,7 +600,7 @@ a:hover {
   justify-content: space-between;
   gap: 10px;
   margin-top: 10px;
-  padding: 0; /* asegurate de resetear si hay padding por defecto */
+  padding: 0;
   list-style: none;
 }
 

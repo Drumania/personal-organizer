@@ -6,34 +6,23 @@ export default function LinkBar() {
   const isActive = (path) =>
     location.pathname === path ? "active fw-bold" : "";
 
+  const menuItems = [
+    { path: "/", label: "Dashboard" },
+    { path: "/routines", label: "Routines" },
+    { path: "/todos", label: "To-do" },
+    { path: "/calendar", label: "Calendar" },
+    { path: "/shopping", label: "Shopping" },
+  ];
+
   return (
     <ul className="link-nav px-3 pb-3">
-      <li className="nav-item">
-        <Link className={`nav-link ${isActive("/")}`} to="/">
-          Dashboard
-        </Link>
-      </li>
-      <li className="nav-item">
-        <Link className={`nav-link ${isActive("/routines")}`} to="/routines">
-          Routines
-        </Link>
-      </li>
-
-      <li className="nav-item">
-        <Link className={`nav-link ${isActive("/todos")}`} to="/todos">
-          To-do
-        </Link>
-      </li>
-      <li className="nav-item">
-        <Link className={`nav-link ${isActive("/calendar")}`} to="/calendar">
-          Calendar
-        </Link>
-      </li>
-      <li className="nav-item">
-        <Link className={`nav-link ${isActive("/shopping")}`} to="/shopping">
-          Shopping
-        </Link>
-      </li>
+      {menuItems.map((item, index) => (
+        <li className="nav-item" key={index}>
+          <Link className={`nav-link ${isActive(item.path)}`} to={item.path}>
+            {item.label}
+          </Link>
+        </li>
+      ))}
     </ul>
   );
 }
