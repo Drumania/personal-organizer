@@ -57,6 +57,7 @@ export default function ShoppingList() {
         userId: user.uid,
         name: itemText,
         category: category || null,
+        archived: false,
         createdAt: serverTimestamp(),
       });
     }
@@ -85,6 +86,19 @@ export default function ShoppingList() {
     setShowModal(false);
   };
 
+  const archiveItem = async (id) => {
+    await updateDoc(doc(db, "shopping_items", id), { archived: true });
+    fetchItems();
+  };
+
+  const restoreItem = async (id) => {
+    await updateDoc(doc(db, "shopping_items", id), { archived: false });
+    fetchItems();
+  };
+
+  const activeItems = items.filter((item) => !item.archived);
+  const archivedItems = items.filter((item) => item.archived);
+
   return (
     <div className="container py-4 text-white">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -100,11 +114,11 @@ export default function ShoppingList() {
         </button>
       </div>
 
-      {items.length === 0 ? (
-        <p className="text-secondary">No items added yet.</p>
+      {activeItems.length === 0 ? (
+        <p className="text-secondary">No items in your list.</p>
       ) : (
-        <ul className="list-group">
-          {items.map((item) => (
+        <ul className="list-group mb-4">
+          {activeItems.map((item) => (
             <li
               key={item.id}
               className="list-group-item bg-dark text-white d-flex justify-content-between align-items-center"
@@ -117,18 +131,49 @@ export default function ShoppingList() {
                   </span>
                 )}
               </div>
-              <button
-                className="btn btn-sm text-white"
-                onClick={() => handleEdit(item)}
-                title="Edit"
-              >
-                <i className="bi bi-gear"></i>
-              </button>
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-sm btn-outline-light"
+                  onClick={() => archiveItem(item.id)}
+                >
+                  Archive
+                </button>
+                <button
+                  className="btn btn-sm text-white"
+                  onClick={() => handleEdit(item)}
+                  title="Edit"
+                >
+                  <i className="bi bi-gear"></i>
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       )}
 
+      {archivedItems.length > 0 && (
+        <>
+          <h5 className="mb-3 text-secondary">Archived Items</h5>
+          <ul className="list-group">
+            {archivedItems.map((item) => (
+              <li
+                key={item.id}
+                className="list-group-item bg-dark text-white d-flex justify-content-between align-items-center"
+              >
+                <div>{item.name}</div>
+                <button
+                  className="btn btn-sm btn-outline-light"
+                  onClick={() => restoreItem(item.id)}
+                >
+                  Move to List
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {/* Modal... (igual que antes, sin cambios) */}
       {showModal && (
         <div className="custom-modal-backdrop" onClick={resetForm}>
           <div className="custom-modal" onClick={(e) => e.stopPropagation()}>
