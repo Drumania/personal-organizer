@@ -31,7 +31,15 @@ export default function TodoThumb({
                 checked={task.completed}
                 onChange={() => onToggle(task)}
               />
-              <span>{task.title}</span>
+              <div>
+                {task.title}
+                {task.category && (
+                  <span className="badge bg-secondary ms-2">
+                    {task.category}
+                  </span>
+                )}
+              </div>
+
               {task.type === "routine" && (
                 <span className="badge bg-success ms-2">Routine</span>
               )}

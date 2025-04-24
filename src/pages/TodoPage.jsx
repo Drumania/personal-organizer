@@ -27,7 +27,8 @@ export default function TodoPage() {
   const [editingId, setEditingId] = useState(null);
   const [isToday, setIsToday] = useState(true);
   const titleRef = useRef(null);
-
+  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState([]);
   const today = format(new Date(), "yyyy-MM-dd");
   const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
 
@@ -39,8 +40,13 @@ export default function TodoPage() {
     const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     setTasks(data);
 
-    // Luego de cargar tareas, asegurate que las de rutina estén creadas
-    await handleRoutineTasks(data);
+    const uniqueCategories = Array.from(
+      new Set(data.map((t) => t.category).filter(Boolean))
+    );
+    setCategories(uniqueCategories); // Nuevo estado
+
+    // // Luego de cargar tareas, asegurate que las de rutina estén creadas
+    // await handleRoutineTasks(data);
 
     setLoading(false);
   };
@@ -131,6 +137,7 @@ export default function TodoPage() {
       completed: false,
       date,
       createdAt: serverTimestamp(),
+      category: category || null,
     };
 
     if (editingId) {
@@ -265,6 +272,35 @@ export default function TodoPage() {
                     required
                   />
                 </div>
+
+                <label className="form-label">Select Category</label>
+                <select
+                  className="form-select bg-dark text-white"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">-- Select Category --</option>
+                  {categories.map((cat, index) => (
+                    <option key={index} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+
+                <details className="mt-2">
+                  <summary className="opacity-50 mb-2">
+                    Add new category
+                  </summary>
+                  <input
+                    type="text"
+                    className="form-control mt-2 bg-dark text-white"
+                    placeholder="New category"
+                    value={
+                      category && !categories.includes(category) ? category : ""
+                    }
+                    onChange={(e) => setCategory(e.target.value)}
+                  />
+                </details>
 
                 {/* Fecha condicional */}
                 <div className="mb-2 form-check">
