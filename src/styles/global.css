@@ -386,6 +386,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   padding-bottom: 0.5rem;
   cursor: grab;
   transition: all 0.3s ease;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox oculta por default */
 }
 
 .timeline-scroll:active {
@@ -393,15 +395,29 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .timeline-scroll::-webkit-scrollbar {
-  height: 6px;
+  height: 0px; /* Oculta scroll en Chrome/Safari por default */
 }
 
-.timeline-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
+/* Solo en Desktop: mostrar scroll al hacer hover */
+@media (hover: hover) and (pointer: fine) {
+  .timeline-scroll:hover::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .timeline-scroll:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  /* Firefox al hover (más fino control si querés) */
+  .timeline-scroll:hover {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
 }
 
-.timeline-scroll > button {
+/* Snap para botones o elementos dentro */
+.timeline-scroll > * {
   scroll-snap-align: center;
   flex: 0 0 auto;
 }

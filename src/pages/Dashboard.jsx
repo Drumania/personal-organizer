@@ -86,24 +86,39 @@ export default function Dashboard() {
     }
   }, []);
 
+  //const apiKey = "a9e26448aaa9042e8ea7b0075c32523b";
+
   useEffect(() => {
     const fetchWeather = async () => {
       if (!location) return;
 
       const apiKey = "a9e26448aaa9042e8ea7b0075c32523b";
-      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=${apiKey}`;
+      const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=${apiKey}`;
+      const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=${apiKey}`;
 
-      const res = await fetch(url);
-      const data = await res.json();
+      const [forecastRes, currentRes] = await Promise.all([
+        fetch(forecastUrl),
+        fetch(currentUrl),
+      ]);
 
-      // Procesamos para tener clima por día
+      const forecastData = await forecastRes.json();
+      const currentData = await currentRes.json();
+
+      // Procesar forecast
       const groupedWeather = {};
-      data.list.forEach((item) => {
+      forecastData.list.forEach((item) => {
         const date = item.dt_txt.split(" ")[0];
         if (!groupedWeather[date]) {
           groupedWeather[date] = item;
         }
       });
+
+      // Agregar clima actual para hoy
+      const todayStr = format(today, "yyyy-MM-dd");
+      groupedWeather[todayStr] = {
+        main: currentData.main,
+        weather: currentData.weather,
+      };
 
       setWeatherData(groupedWeather);
     };

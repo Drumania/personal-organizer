@@ -8,7 +8,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./styles/global.css";
 import "react-calendar/dist/Calendar.css";
-import "weather-icons/css/weather-icons.css";
 
 // Registro del Service Worker para detectar updates
 import { registerSW } from "virtual:pwa-register";

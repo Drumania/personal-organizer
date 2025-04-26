@@ -1,4 +1,12 @@
+import { useEffect } from "react";
 import { format, isSameDay } from "date-fns";
+import {
+  SunIcon,
+  CloudIcon,
+  BoltIcon,
+  Bars3Icon, // Niebla
+} from "@heroicons/react/24/solid";
+import React from "react";
 
 export default function DateTimeline({
   dateRange,
@@ -10,33 +18,50 @@ export default function DateTimeline({
   timelineRef,
   weatherData,
 }) {
-  const getWeatherIconClass = (iconCode) => {
+  const getHeroWeatherIcon = (iconCode) => {
     const codeMap = {
-      "01d": "wi-day-sunny",
-      "01n": "wi-night-clear",
-      "02d": "wi-day-cloudy",
-      "02n": "wi-night-alt-cloudy",
-      "03d": "wi-cloud",
-      "03n": "wi-cloud",
-      "04d": "wi-cloudy",
-      "04n": "wi-cloudy",
-      "09d": "wi-showers",
-      "09n": "wi-showers",
-      "10d": "wi-day-rain",
-      "10n": "wi-night-alt-rain",
-      "11d": "wi-thunderstorm",
-      "11n": "wi-thunderstorm",
-      "13d": "wi-snow",
-      "13n": "wi-snow",
-      "50d": "wi-fog",
-      "50n": "wi-fog",
+      // Despejado siempre sol
+      "01d": <SunIcon className="h-5 w-5 text-yellow-400" />,
+      "01n": <SunIcon className="h-5 w-5 text-yellow-400" />, // 🌙 → ☀️
+
+      // Nubes y otros
+      "02d": <CloudIcon className="h-5 w-5 text-gray-300" />,
+      "02n": <CloudIcon className="h-5 w-5 text-gray-500" />,
+      "03d": <CloudIcon className="h-5 w-5 text-gray-400" />,
+      "03n": <CloudIcon className="h-5 w-5 text-gray-600" />,
+      "04d": <CloudIcon className="h-5 w-5 text-gray-500" />,
+      "04n": <CloudIcon className="h-5 w-5 text-gray-700" />,
+
+      // Lluvia como nubes azules
+      "09d": <CloudIcon className="h-5 w-5 text-blue-400" />,
+      "09n": <CloudIcon className="h-5 w-5 text-blue-600" />,
+      "10d": <CloudIcon className="h-5 w-5 text-blue-500" />,
+      "10n": <CloudIcon className="h-5 w-5 text-blue-700" />,
+
+      // Tormentas
+      "11d": <BoltIcon className="h-5 w-5 text-yellow-500" />,
+      "11n": <BoltIcon className="h-5 w-5 text-yellow-700" />,
+
+      // Nieve
+      "13d": <CloudIcon className="h-5 w-5 text-white" />,
+      "13n": <CloudIcon className="h-5 w-5 text-white" />,
+
+      // Niebla
+      "50d": <Bars3Icon className="h-5 w-5 text-gray-400" />,
+      "50n": <Bars3Icon className="h-5 w-5 text-gray-500" />,
     };
-    return codeMap[iconCode] || "wi-na";
+    return codeMap[iconCode] || <CloudIcon className="h-5 w-5 text-white-50" />;
   };
+
+  useEffect(() => {
+    console.log("WeatherData:", weatherData);
+    console.log("TodayStr:", format(today, "yyyy-MM-dd"));
+    console.log("Today Weather:", weatherData[format(today, "yyyy-MM-dd")]);
+  }, [weatherData]);
 
   return (
     <div
-      className="d-flex gap-3 overflow-auto mb-5 px-2"
+      className="d-flex gap-3 mb-5 px-2 timeline-scroll"
       style={{
         WebkitOverflowScrolling: "touch",
         cursor: "grab",
@@ -57,9 +82,6 @@ export default function DateTimeline({
         const eventsCount = getDayEvents(date).length;
 
         const weatherForDay = weatherData[dateStr];
-        const weatherIcon = weatherForDay
-          ? `http://openweathermap.org/img/wn/${weatherForDay.weather[0].icon}@2x.png`
-          : null;
         const weatherTemp = weatherForDay
           ? Math.round(weatherForDay.main.temp)
           : null;
@@ -67,7 +89,7 @@ export default function DateTimeline({
         return (
           <div
             key={dateStr}
-            className={` px-2`}
+            className={`px-2`}
             style={{
               minWidth: "100px",
               cursor: "pointer",
@@ -86,7 +108,8 @@ export default function DateTimeline({
             }}
             onClick={() => setActiveDate(date)}
           >
-            <div className="d-flex justify-content-between">
+            {/* Día + Clima */}
+            <div className="d-flex justify-content-between align-items-center mb-1">
               <div
                 className={`fw-bold ${
                   isToday
@@ -100,19 +123,15 @@ export default function DateTimeline({
                 {format(date, "d")}
               </div>
 
-              {weatherIcon && (
-                <div className="mt-1 text-white-50 text-center">
-                  <i
-                    className={`wi ${getWeatherIconClass(
-                      weatherForDay.weather[0].icon
-                    )}`}
-                    style={{ fontSize: "1.2rem" }}
-                  ></i>
+              {weatherForDay && (
+                <div className="text-center">
+                  {getHeroWeatherIcon(weatherForDay.weather[0].icon)}
                   <div style={{ fontSize: "0.7rem" }}>{weatherTemp}°C</div>
                 </div>
               )}
             </div>
 
+            {/* Día de la semana */}
             <div
               className={`text-uppercase pb-2 ${
                 isToday ? "text-menta fw-bold" : "text-white-50"
@@ -126,7 +145,7 @@ export default function DateTimeline({
               {format(date, "EEE - MMMM")}
             </div>
 
-            {/* Tareas/Eventos como texto simple */}
+            {/* Tareas/Eventos */}
             <div className="mt-2" style={{ fontSize: "0.7rem" }}>
               {tasksCount > 0 && (
                 <div className="text-info">{tasksCount} tasks</div>
