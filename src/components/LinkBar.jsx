@@ -8,7 +8,7 @@ export default function LinkBar() {
 
   const menuItems = [
     { path: "/", label: "Dashboard" },
-    { path: "/routines", label: "Routines" },
+    // { path: "/routines", label: "Routines" },
     { path: "/todos", label: "To-do" },
     { path: "/calendar", label: "Calendar" },
     { path: "/shopping", label: "Shopping" },

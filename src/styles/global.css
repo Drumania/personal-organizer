@@ -378,6 +378,34 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
+.timeline-scroll {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  cursor: grab;
+  transition: all 0.3s ease;
+}
+
+.timeline-scroll:active {
+  cursor: grabbing;
+}
+
+.timeline-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.timeline-scroll > button {
+  scroll-snap-align: center;
+  flex: 0 0 auto;
+}
+
 /* Días */
 
 .react-calendar button {

@@ -28,7 +28,6 @@ export default function App() {
       {user && (
         <>
           <Navbar />
-          {/* Ocultar LinkBar en la ruta /settings */}
           {location.pathname !== "/settings" && <LinkBar />}
           <NotificationWatcher />
         </>
@@ -42,7 +41,7 @@ export default function App() {
             <Route
               path="/"
               element={
-                <SwipeWrapper>
+                <SwipeWrapper disableSwipe={true}>
                   <Dashboard />
                 </SwipeWrapper>
               }

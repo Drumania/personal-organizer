@@ -1,33 +1,28 @@
-// src/components/SwipeWrapper.jsx
 import { useSwipeable } from "react-swipeable";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const routes = ["/", "/routines", "/todos", "/calendar", "/shopping"];
-
-export default function SwipeWrapper({ children }) {
+export default function SwipeWrapper({ children, disableSwipe = false }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentIndex = routes.indexOf(location.pathname);
 
-  const handlers = useSwipeable({
+  const pages = ["/", "/todos", "/calendar", "/shopping"];
+  const currentIndex = pages.indexOf(location.pathname);
+
+  const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
-      if (currentIndex < routes.length - 1) {
-        navigate(routes[currentIndex + 1]);
+      if (disableSwipe) return;
+      if (currentIndex < pages.length - 1) {
+        navigate(pages[currentIndex + 1]);
       }
     },
     onSwipedRight: () => {
+      if (disableSwipe) return;
       if (currentIndex > 0) {
-        navigate(routes[currentIndex - 1]);
+        navigate(pages[currentIndex - 1]);
       }
     },
-    preventDefaultTouchmoveEvent: true,
-    trackTouch: true,
     trackMouse: true,
   });
 
-  return (
-    <div {...handlers} className="swipe-container">
-      {children}
-    </div>
-  );
+  return <div {...swipeHandlers}>{children}</div>;
 }

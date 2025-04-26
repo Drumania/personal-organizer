@@ -8,12 +8,11 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  getDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, addDays, isSameWeek, isSameMonth } from "date-fns";
+import { format, addDays, isAfter } from "date-fns";
 import TodoThumb from "@/components/TodoThumb";
 
 export default function TodoPage() {
@@ -26,11 +25,11 @@ export default function TodoPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isToday, setIsToday] = useState(true);
-  const titleRef = useRef(null);
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
-  const today = format(new Date(), "yyyy-MM-dd");
-  const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
+
+  const titleRef = useRef(null);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -43,87 +42,8 @@ export default function TodoPage() {
     const uniqueCategories = Array.from(
       new Set(data.map((t) => t.category).filter(Boolean))
     );
-    setCategories(uniqueCategories); // Nuevo estado
-
-    // // Luego de cargar tareas, asegurate que las de rutina estén creadas
-    // await handleRoutineTasks(data);
-
+    setCategories(uniqueCategories);
     setLoading(false);
-  };
-
-  const handleRoutineTasks = async (currentTasks) => {
-    const userRef = doc(db, "users", user.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) return;
-
-    const routines = snap.data().myRoutines || [];
-    const todayDate = new Date();
-
-    let created = false; // Solo refetch si se crea una nueva
-
-    for (const routine of routines) {
-      const alreadyExists = currentTasks.some(
-        (t) =>
-          t.title === routine.name &&
-          t.type === "routine" &&
-          t.date === today &&
-          !t.completed
-      );
-
-      if (routine.paused || alreadyExists) continue;
-
-      let shouldCreate = false;
-
-      if (routine.frequency === "Daily") {
-        shouldCreate = true;
-      } else if (
-        routine.frequency === "Weekly" &&
-        !currentTasks.some(
-          (t) =>
-            t.title === routine.name &&
-            t.type === "routine" &&
-            isSameWeek(new Date(t.date), todayDate)
-        )
-      ) {
-        shouldCreate = true;
-      } else if (
-        routine.frequency === "Monthly" &&
-        !currentTasks.some(
-          (t) =>
-            t.title === routine.name &&
-            t.type === "routine" &&
-            isSameMonth(new Date(t.date), todayDate)
-        )
-      ) {
-        shouldCreate = true;
-      }
-
-      if (shouldCreate) {
-        const newTask = {
-          userId: user.uid,
-          title: routine.name,
-          priority: "normal",
-          completed: false,
-          date: today,
-          type: "routine",
-          createdAt: serverTimestamp(),
-        };
-
-        await addDoc(collection(db, "todos"), newTask);
-        created = true;
-      }
-    }
-
-    // Refetch solo si se creó algo
-    if (created) {
-      const q = query(collection(db, "todos"), where("userId", "==", user.uid));
-      const refetch = await getDocs(q);
-      const updated = refetch.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setTasks(updated);
-    }
   };
 
   const handleAddOrUpdate = async (e) => {
@@ -142,77 +62,67 @@ export default function TodoPage() {
 
     if (editingId) {
       await updateDoc(doc(db, "todos", editingId), payload);
-      setTasks((prevTasks) =>
-        prevTasks.map((t) => (t.id === editingId ? { ...t, ...payload } : t))
+      setTasks((prev) =>
+        prev.map((t) => (t.id === editingId ? { ...t, ...payload } : t))
       );
     } else {
       const docRef = await addDoc(collection(db, "todos"), payload);
-      setTasks((prevTasks) => [
-        ...prevTasks,
-        { ...payload, id: docRef.id, completed: false },
-      ]);
+      setTasks((prev) => [...prev, { ...payload, id: docRef.id }]);
     }
 
-    setTitle("");
-    setPriority("normal");
-    setDate(format(new Date(), "yyyy-MM-dd"));
-    setEditingId(null);
-    setIsToday(true);
-    setShowModal(false);
+    resetModal();
   };
 
   const toggleComplete = async (task) => {
     const updated = !task.completed;
     await updateDoc(doc(db, "todos", task.id), { completed: updated });
-
-    setTasks((prevTasks) =>
-      prevTasks.map((t) =>
-        t.id === task.id ? { ...t, completed: updated } : t
-      )
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, completed: updated } : t))
     );
   };
 
   const handleDelete = async (taskId) => {
     await deleteDoc(doc(db, "todos", taskId));
-    setTasks((prevTasks) => prevTasks.filter((t) => t.id !== taskId));
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    resetModal();
   };
 
   const handleEdit = (task) => {
     setTitle(task.title);
     setPriority(task.priority || "normal");
     setDate(task.date);
+    setCategory(task.category || "");
     setEditingId(task.id);
-    setIsToday(task.date === format(new Date(), "yyyy-MM-dd"));
+    setIsToday(task.date === todayStr);
     setShowModal(true);
   };
 
   const handleSkipToTomorrow = async () => {
-    const tomorrow = format(addDays(new Date(), 1), "yyyy-MM-dd");
-    await updateDoc(doc(db, "todos", editingId), { date: tomorrow });
-
-    setTasks((prevTasks) =>
-      prevTasks.map((t) => (t.id === editingId ? { ...t, date: tomorrow } : t))
+    const tomorrowStr = format(addDays(new Date(), 1), "yyyy-MM-dd");
+    await updateDoc(doc(db, "todos", editingId), { date: tomorrowStr });
+    setTasks((prev) =>
+      prev.map((t) => (t.id === editingId ? { ...t, date: tomorrowStr } : t))
     );
-
-    setShowModal(false);
+    resetModal();
   };
 
-  const groupTasks = (targetDate) => {
-    const filtered = tasks
-      .filter((t) => t.date === targetDate)
-      .sort((a, b) => {
-        if (!a.completed && b.completed) return -1;
-        if (a.completed && !b.completed) return 1;
-        if (a.priority === "high" && b.priority !== "high") return -1;
-        if (a.priority !== "high" && b.priority === "high") return 1;
-        return 0;
-      });
-    return filtered;
+  const resetModal = () => {
+    setTitle("");
+    setPriority("normal");
+    setDate(todayStr);
+    setEditingId(null);
+    setIsToday(true);
+    setShowModal(false);
+    setCategory("");
   };
 
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  const futureTasks = tasks
+    .filter((t) => isAfter(new Date(t.date), new Date(todayStr)))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
     <div className="container py-4 text-white">
@@ -227,28 +137,45 @@ export default function TodoPage() {
         <div className="loader-menta"></div>
       ) : (
         <>
+          {/* Tareas de hoy */}
           <TodoThumb
             title="Today"
-            tasks={groupTasks(today)}
+            tasks={tasks
+              .filter((t) => t.date === todayStr)
+              .sort((a, b) => {
+                if (!a.completed && b.completed) return -1;
+                if (a.completed && !b.completed) return 1;
+                if (a.priority === "high" && b.priority !== "high") return -1;
+                if (a.priority !== "high" && b.priority === "high") return 1;
+                return 0;
+              })}
             onToggle={toggleComplete}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
-          <TodoThumb
-            title="Tomorrow"
-            tasks={groupTasks(tomorrow)}
-            onToggle={toggleComplete}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
+
+          {/* Futuras */}
+          {futureTasks.length > 0 && (
+            <details className="mb-5">
+              <summary className="text-white mb-3">Upcoming Tasks</summary>
+              {futureTasks.map((task) => (
+                <TodoThumb
+                  key={task.id}
+                  title={format(new Date(task.date), "PPP")}
+                  tasks={[task]}
+                  onToggle={toggleComplete}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                />
+              ))}
+            </details>
+          )}
         </>
       )}
-      {/* Modal de tareas */}
+
+      {/* Modal */}
       {showModal && (
-        <div
-          className="custom-modal-backdrop"
-          onClick={() => setShowModal(false)}
-        >
+        <div className="custom-modal-backdrop" onClick={() => resetModal()}>
           <div className="custom-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-content bg-dark text-white p-3 rounded-3">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -256,11 +183,12 @@ export default function TodoPage() {
                 <button
                   type="button"
                   className="btn-close btn-close-white"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => resetModal()}
                 ></button>
               </div>
 
               <form onSubmit={handleAddOrUpdate}>
+                {/* Título */}
                 <div className="mb-2">
                   <textarea
                     ref={titleRef}
@@ -273,6 +201,7 @@ export default function TodoPage() {
                   />
                 </div>
 
+                {/* Categoría */}
                 <label className="form-label">Select Category</label>
                 <select
                   className="form-select bg-dark text-white"
@@ -302,7 +231,7 @@ export default function TodoPage() {
                   />
                 </details>
 
-                {/* Fecha condicional */}
+                {/* Fecha */}
                 <div className="mb-2 form-check">
                   <input
                     className="form-check-input"
@@ -312,7 +241,7 @@ export default function TodoPage() {
                       const checked = !isToday;
                       setIsToday(checked);
                       if (checked) {
-                        setDate(format(new Date(), "yyyy-MM-dd"));
+                        setDate(todayStr);
                       }
                     }}
                     id="todayCheck"
@@ -378,10 +307,7 @@ export default function TodoPage() {
                     <button
                       type="button"
                       className="btn btn-outline-danger px-4"
-                      onClick={() => {
-                        handleDelete(editingId);
-                        setShowModal(false);
-                      }}
+                      onClick={() => handleDelete(editingId)}
                     >
                       Delete Task
                     </button>
