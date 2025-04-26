@@ -20,6 +20,7 @@ import {
 } from "date-fns";
 import TodoThumb from "@/components/TodoThumb";
 import EventThumb from "@/components/EventThumb";
+import DateTimeline from "@/components/DateTimeline";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -31,6 +32,8 @@ export default function Dashboard() {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
   const [hasCentered, setHasCentered] = useState(false);
+  const [weatherData, setWeatherData] = useState({});
+  const [location, setLocation] = useState(null);
 
   const dateRange = Array.from({ length: 11 }, (_, i) =>
     addDays(subDays(today, 5), i)
@@ -67,6 +70,46 @@ export default function Dashboard() {
 
     fetchData();
   }, [user]);
+
+  useEffect(() => {
+    // Obtener ubicación del usuario
+    if (!location) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setLocation({ latitude, longitude });
+        },
+        (err) => {
+          console.error("Error getting location:", err);
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      if (!location) return;
+
+      const apiKey = "a9e26448aaa9042e8ea7b0075c32523b";
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&units=metric&appid=${apiKey}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // Procesamos para tener clima por día
+      const groupedWeather = {};
+      data.list.forEach((item) => {
+        const date = item.dt_txt.split(" ")[0];
+        if (!groupedWeather[date]) {
+          groupedWeather[date] = item;
+        }
+      });
+
+      setWeatherData(groupedWeather);
+    };
+
+    fetchWeather();
+  }, [location]);
 
   const toggleComplete = async (task) => {
     const updated = !task.completed;
@@ -108,7 +151,7 @@ export default function Dashboard() {
             todayElement.clientWidth / 2;
 
           timeline.scrollTo({ left: scrollTo, behavior: "smooth" });
-          setHasCentered(true); // ✅ No volver a centrar
+          setHasCentered(true);
         }
       }, 100);
     }
@@ -121,84 +164,16 @@ export default function Dashboard() {
       ) : (
         <>
           {/* Timeline horizontal */}
-          <div
-            className="d-flex gap-3 overflow-auto mb-5 px-2"
-            style={{
-              WebkitOverflowScrolling: "touch",
-              cursor: "grab",
-            }}
-            ref={timelineRef}
-            onMouseDown={(e) => {
-              e.currentTarget.style.cursor = "grabbing";
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.cursor = "grab";
-            }}
-          >
-            {dateRange.map((date) => {
-              const dateStr = format(date, "yyyy-MM-dd");
-              const isToday = isSameDay(date, today);
-              const isActive = isSameDay(date, activeDate);
-              const tasksCount = getDayTasks(date).length;
-              const eventsCount = getDayEvents(date).length;
-
-              return (
-                <div
-                  key={dateStr}
-                  className={`d-flex flex-column align-items-center px-2`}
-                  style={{
-                    minWidth: "100px",
-                    cursor: "pointer",
-                    borderTop: isToday
-                      ? "3px solid var(--menta-color)"
-                      : isActive
-                      ? "2px solid var(--menta-color)"
-                      : "1px solid rgba(255,255,255,0.2)",
-                    backgroundColor:
-                      isActive && !isToday ? "#1f1f1f" : "transparent",
-                    padding: "10px 0",
-                    transition: "all 0.2s ease",
-                  }}
-                  onClick={() => setActiveDate(date)}
-                >
-                  {/* Día y Fecha */}
-                  <div
-                    className={`text-uppercase ${
-                      isToday ? "text-menta fw-bold" : "text-white-50"
-                    }`}
-                    style={{ fontSize: "0.75rem", letterSpacing: "0.05em" }}
-                  >
-                    {format(date, "EEE")}
-                  </div>
-                  <div
-                    className={`fw-bold ${
-                      isToday
-                        ? "text-menta"
-                        : isActive
-                        ? "text-white"
-                        : "text-white-50"
-                    }`}
-                    style={{ fontSize: "1.25rem" }}
-                  >
-                    {format(date, "d")}
-                  </div>
-
-                  {/* Tareas/Eventos como texto simple */}
-                  <div
-                    className="mt-2 text-center"
-                    style={{ fontSize: "0.7rem" }}
-                  >
-                    {tasksCount > 0 && (
-                      <div className="text-info">{tasksCount} tasks</div>
-                    )}
-                    {eventsCount > 0 && (
-                      <div className="text-warning">{eventsCount} events</div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <DateTimeline
+            dateRange={dateRange}
+            today={today}
+            activeDate={activeDate}
+            setActiveDate={setActiveDate}
+            getDayTasks={getDayTasks}
+            getDayEvents={getDayEvents}
+            timelineRef={timelineRef}
+            weatherData={weatherData}
+          />
 
           {/* Tareas y eventos del día seleccionado */}
           <h4 className="mb-3">
