@@ -7,9 +7,9 @@ export default function LinkBar() {
     location.pathname === path ? "active fw-bold" : "";
 
   const menuItems = [
-    { path: "/", label: "Dashboard" },
+    { path: "/", label: "To Do's" },
     // { path: "/routines", label: "Routines" },
-    { path: "/todos", label: "To-do" },
+    // { path: "/todos", label: "To-do" },
     { path: "/calendar", label: "Calendar" },
     { path: "/shopping", label: "Shopping" },
   ];

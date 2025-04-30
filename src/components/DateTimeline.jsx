@@ -20,44 +20,27 @@ export default function DateTimeline({
 }) {
   const getHeroWeatherIcon = (iconCode) => {
     const codeMap = {
-      // Despejado siempre sol
       "01d": <SunIcon className="h-5 w-5 text-yellow-400" />,
-      "01n": <SunIcon className="h-5 w-5 text-yellow-400" />, // 🌙 → ☀️
-
-      // Nubes y otros
+      "01n": <SunIcon className="h-5 w-5 text-yellow-400" />,
       "02d": <CloudIcon className="h-5 w-5 text-gray-300" />,
       "02n": <CloudIcon className="h-5 w-5 text-gray-500" />,
       "03d": <CloudIcon className="h-5 w-5 text-gray-400" />,
       "03n": <CloudIcon className="h-5 w-5 text-gray-600" />,
       "04d": <CloudIcon className="h-5 w-5 text-gray-500" />,
       "04n": <CloudIcon className="h-5 w-5 text-gray-700" />,
-
-      // Lluvia como nubes azules
       "09d": <CloudIcon className="h-5 w-5 text-blue-400" />,
       "09n": <CloudIcon className="h-5 w-5 text-blue-600" />,
       "10d": <CloudIcon className="h-5 w-5 text-blue-500" />,
       "10n": <CloudIcon className="h-5 w-5 text-blue-700" />,
-
-      // Tormentas
       "11d": <BoltIcon className="h-5 w-5 text-yellow-500" />,
       "11n": <BoltIcon className="h-5 w-5 text-yellow-700" />,
-
-      // Nieve
       "13d": <CloudIcon className="h-5 w-5 text-white" />,
       "13n": <CloudIcon className="h-5 w-5 text-white" />,
-
-      // Niebla
       "50d": <Bars3Icon className="h-5 w-5 text-gray-400" />,
       "50n": <Bars3Icon className="h-5 w-5 text-gray-500" />,
     };
     return codeMap[iconCode] || <CloudIcon className="h-5 w-5 text-white-50" />;
   };
-
-  useEffect(() => {
-    console.log("WeatherData:", weatherData);
-    console.log("TodayStr:", format(today, "yyyy-MM-dd"));
-    console.log("Today Weather:", weatherData[format(today, "yyyy-MM-dd")]);
-  }, [weatherData]);
 
   return (
     <div
@@ -81,15 +64,19 @@ export default function DateTimeline({
         const tasksCount = getDayTasks(date).length;
         const eventsCount = getDayEvents(date).length;
 
-        const weatherForDay = weatherData[dateStr];
-        const weatherTemp = weatherForDay
+        const weatherForDay = weatherData?.[dateStr];
+        const weatherTemp = weatherForDay?.main?.temp
           ? Math.round(weatherForDay.main.temp)
           : null;
+        const weatherIcon =
+          weatherForDay?.weather?.length > 0
+            ? getHeroWeatherIcon(weatherForDay.weather[0].icon)
+            : null;
 
         return (
           <div
             key={dateStr}
-            className={`px-2`}
+            className="px-2"
             style={{
               minWidth: "100px",
               cursor: "pointer",
@@ -123,10 +110,12 @@ export default function DateTimeline({
                 {format(date, "d")}
               </div>
 
-              {weatherForDay && (
+              {weatherIcon && (
                 <div className="text-center">
-                  {getHeroWeatherIcon(weatherForDay.weather[0].icon)}
-                  <div style={{ fontSize: "0.7rem" }}>{weatherTemp}°C</div>
+                  {weatherIcon}
+                  <div style={{ fontSize: "0.7rem" }}>
+                    {weatherTemp !== null ? `${weatherTemp}°C` : ""}
+                  </div>
                 </div>
               )}
             </div>

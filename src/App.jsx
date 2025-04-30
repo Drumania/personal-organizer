@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import RoutinesPage from "./pages/RoutinesPage";
-import TodoPage from "./pages/TodoPage";
+// import RoutinesPage from "./pages/RoutinesPage";
+// import TodoPage from "./pages/TodoPage";
 import CalendarPage from "./pages/CalendarPage";
 import ShoppingList from "./pages/ShoppingList";
 import { useAuth } from "./contexts/AuthContext";
@@ -46,7 +46,7 @@ export default function App() {
                 </SwipeWrapper>
               }
             />
-            <Route
+            {/* <Route
               path="/routines"
               element={
                 <SwipeWrapper>
@@ -61,7 +61,7 @@ export default function App() {
                   <TodoPage />
                 </SwipeWrapper>
               }
-            />
+            /> */}
             <Route
               path="/calendar"
               element={

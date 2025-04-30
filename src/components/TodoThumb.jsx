@@ -39,7 +39,9 @@ export default function TodoThumb({
                   </span>
                 )}
               </div>
-
+              {task.daysOverdue && (
+                <span className="text-danger ms-2">+{task.daysOverdue}</span>
+              )}
               {task.type === "routine" && (
                 <span className="badge bg-success ms-2">Routine</span>
               )}
