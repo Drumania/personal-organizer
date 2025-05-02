@@ -128,7 +128,7 @@ export default function DateTimeline({
               style={{
                 fontSize: "0.75rem",
                 letterSpacing: "0.05em",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+                // borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
               }}
             >
               {format(date, "EEE - MMMM")}
@@ -136,11 +136,34 @@ export default function DateTimeline({
 
             {/* Tareas/Eventos */}
             <div className="mt-2" style={{ fontSize: "0.7rem" }}>
-              {tasksCount > 0 && (
-                <div className="text-info">{tasksCount} tasks</div>
+              {getDayTasks(date).length > 0 && (
+                <div className="d-flex flex-wrap gap-1 mt-1">
+                  {getDayTasks(date).map((task, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: task.completed ? "#5daf9a" : "#aaa",
+                      }}
+                    ></div>
+                  ))}
+                </div>
               )}
-              {eventsCount > 0 && (
-                <div className="text-warning">{eventsCount} events</div>
+              {getDayEvents(date).length > 0 && (
+                <div className="d-flex flex-wrap gap-1 mt-1">
+                  {getDayEvents(date).map((event, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        backgroundColor: "#60676f",
+                      }}
+                    ></div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
