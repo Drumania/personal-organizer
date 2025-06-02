@@ -5,12 +5,12 @@ import { getStorage } from "firebase/storage";
 import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCaWyoDm-D13vJAMDSYaBPmS8Q-aaBrhe4",
-  authDomain: "personalorganizer-344d3.firebaseapp.com",
-  projectId: "personalorganizer-344d3",
-  storageBucket: "personalorganizer-344d3.firebasestorage.app",
-  messagingSenderId: "1035246124387",
-  appId: "1:1035246124387:web:707ac1aed1b56d1f276756",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);

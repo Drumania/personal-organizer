@@ -10,7 +10,6 @@ import Navbar from "@/components/Navbar";
 import LinkBar from "./components/LinkBar";
 import UserSettings from "./components/UserSettings";
 import NotificationWatcher from "@/components/NotificationWatcher";
-import SwipeWrapper from "./components/SwipeWrapper";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -27,8 +26,7 @@ export default function App() {
     <>
       {user && (
         <>
-          <Navbar />
-          {location.pathname !== "/settings" && <LinkBar />}
+          <Navbar />d{location.pathname !== "/settings" && <LinkBar />}
           <NotificationWatcher />
         </>
       )}
@@ -38,46 +36,9 @@ export default function App() {
           <Route path="/*" element={<Login />} />
         ) : (
           <>
-            <Route
-              path="/"
-              element={
-                <SwipeWrapper disableSwipe={true}>
-                  <Dashboard />
-                </SwipeWrapper>
-              }
-            />
-            {/* <Route
-              path="/routines"
-              element={
-                <SwipeWrapper>
-                  <RoutinesPage />
-                </SwipeWrapper>
-              }
-            />
-            <Route
-              path="/todos"
-              element={
-                <SwipeWrapper>
-                  <TodoPage />
-                </SwipeWrapper>
-              }
-            /> */}
-            <Route
-              path="/calendar"
-              element={
-                <SwipeWrapper>
-                  <CalendarPage />
-                </SwipeWrapper>
-              }
-            />
-            <Route
-              path="/shopping"
-              element={
-                <SwipeWrapper>
-                  <ShoppingList />
-                </SwipeWrapper>
-              }
-            />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/shopping" element={<ShoppingList />} />
             <Route path="/settings" element={<UserSettings />} />
             <Route path="*" element={<Navigate to="/" />} />
           </>

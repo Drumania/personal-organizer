@@ -674,3 +674,46 @@ a:hover {
   opacity: 0.5;
   transition: opacity 0.4s ease;
 }
+
+/* NEW DASHBOARD */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1.4fr;
+  gap: 1.5rem;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+.dashboard-grid section {
+  overflow: hidden;
+}
+@media (max-width: 1279px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+@media (max-width: 991px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.fab {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 2rem;
+  line-height: 56px;
+  text-align: center;
+  background: var(--bs-success);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  z-index: 20;
+  transition: transform 0.15s ease;
+}
+.fab:hover {
+  transform: scale(1.07);
+}
