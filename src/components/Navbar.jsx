@@ -80,7 +80,10 @@ export default function Navbar() {
         {dateStr}
         {temperature !== null && (
           <span className="ms-3 text-white-50" style={{ fontSize: "2rem" }}>
-            <span style={{ color: "#b4e9d2" }}>&diams;</span> {temperature}°C
+            <span className="px-4" style={{ color: "#b4e9d2" }}>
+              &diams;
+            </span>{" "}
+            {temperature}°C
             {locationName && ` · ${locationName}`}
           </span>
         )}
