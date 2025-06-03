@@ -4,17 +4,26 @@ export default function TodoThumb({
   onToggle,
   onDelete,
   onEdit,
+  setShowModal,
 }) {
   if (!tasks.length) return null;
 
   return (
     <div className="mb-5">
-      <h5 className="mb-3">
-        {title}{" "}
-        <small className="text-secondary">
-          {tasks.filter((t) => t.completed).length}/{tasks.length}
-        </small>
-      </h5>
+      <div className="d-flex justify-content-between  align-items-center">
+        <h5 className="mb-3">
+          {title}{" "}
+          <small className="text-secondary">
+            {tasks.filter((t) => t.completed).length}/{tasks.length}
+          </small>
+        </h5>
+        <button
+          className="btn btn-menta mb-3"
+          onClick={() => setShowModal(true)}
+        >
+          <i className="bi bi-plus-lg"></i> Add Task
+        </button>
+      </div>
 
       <ul className="list-group">
         {tasks.map((task) => (

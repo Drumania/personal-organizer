@@ -26,7 +26,8 @@ export default function App() {
     <>
       {user && (
         <>
-          <Navbar />d{location.pathname !== "/settings" && <LinkBar />}
+          <Navbar />
+          {/* {location.pathname !== "/settings" && <LinkBar />} */}
           <NotificationWatcher />
         </>
       )}

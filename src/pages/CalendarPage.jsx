@@ -123,7 +123,7 @@ export default function CalendarPage() {
   }, [showModal]);
 
   return (
-    <div className="container py-4 text-white">
+    <div className="container pb-4 text-white">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Calendar</h2>
         <button

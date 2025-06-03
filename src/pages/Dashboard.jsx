@@ -24,6 +24,8 @@ import {
 import TodoThumb from "@/components/TodoThumb";
 import EventThumb from "@/components/EventThumb";
 import DateTimeline from "@/components/DateTimeline";
+import CalendarPage from "@/pages/CalendarPage";
+import ShoppingList from "@/pages/ShoppingList";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -288,58 +290,65 @@ export default function Dashboard() {
             ? "Today"
             : format(activeDate, "EEEE, MMMM d")}
         </h2>
-        <button className="btn btn-menta" onClick={() => setShowModal(true)}>
-          <i className="bi bi-plus-lg"></i> Add Task
-        </button>
       </div>
 
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
-          <DateTimeline
-            dateRange={dateRange}
-            today={today}
-            activeDate={activeDate}
-            setActiveDate={setActiveDate}
-            getDayTasks={getDayTasks}
-            getDayEvents={getDayEvents}
-            timelineRef={timelineRef}
-            weatherData={weatherData}
-          />
+          <div className="row">
+            <div className="col-8">
+              <DateTimeline
+                dateRange={dateRange}
+                today={today}
+                activeDate={activeDate}
+                setActiveDate={setActiveDate}
+                getDayTasks={getDayTasks}
+                getDayEvents={getDayEvents}
+                timelineRef={timelineRef}
+                weatherData={weatherData}
+              />
 
-          <TodoThumb
-            title="To-dos"
-            tasks={getDayTasks(activeDate)}
-            onToggle={toggleComplete}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            editable={true}
-          />
+              <TodoThumb
+                title="To-dos"
+                tasks={getDayTasks(activeDate)}
+                onToggle={toggleComplete}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                setShowModal={setShowModal}
+                editable={true}
+              />
 
-          {getDayEvents(activeDate).length > 0 && (
-            <>
-              <h5 className="mt-5 mb-3">Events</h5>
-              <EventThumb events={getDayEvents(activeDate)} />
-            </>
-          )}
+              {getDayEvents(activeDate).length > 0 && (
+                <>
+                  <h5 className="mt-5 mb-3">Events</h5>
+                  <EventThumb events={getDayEvents(activeDate)} />
+                </>
+              )}
 
-          {futureTasks.length > 0 && (
-            <details className="mt-5">
-              <summary className="text-white mb-3">Upcoming Tasks</summary>
-              {futureTasks.map((task) => (
-                <TodoThumb
-                  key={task.id}
-                  title={format(new Date(task.date), "PPP")}
-                  tasks={[task]}
-                  onToggle={toggleComplete}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                  editable={true}
-                />
-              ))}
-            </details>
-          )}
+              {futureTasks.length > 0 && (
+                <details className="mt-5">
+                  <summary className="text-white mb-3">Upcoming Tasks</summary>
+                  {futureTasks.map((task) => (
+                    <TodoThumb
+                      key={task.id}
+                      title={format(new Date(task.date), "PPP")}
+                      tasks={[task]}
+                      onToggle={toggleComplete}
+                      onDelete={handleDelete}
+                      onEdit={handleEdit}
+                      editable={true}
+                    />
+                  ))}
+                </details>
+              )}
+            </div>
+
+            <div className="col-4">
+              <CalendarPage />
+              <ShoppingList />
+            </div>
+          </div>
         </>
       )}
 
