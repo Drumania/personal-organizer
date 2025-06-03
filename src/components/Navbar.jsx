@@ -12,6 +12,7 @@ export default function Navbar() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const [dateStr, setDateStr] = useState("");
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -38,11 +39,23 @@ export default function Navbar() {
     };
   }, [menuOpen]);
 
+  const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  useEffect(() => {
+    const now = new Date();
+    const options = { weekday: "long", day: "numeric", month: "long" };
+    const date = now.toLocaleDateString("es-AR", options);
+
+    setDateStr(capitalize(date));
+  }, []);
+
   return (
     <nav className="navbar px-3 py-4 justify-content-between">
       <Link className="wrap-logo" to="/">
         <img src="/logo.png" alt="menta" />
       </Link>
+
+      <h1>{dateStr}</h1>
 
       <div className="position-relative d-flex align-items-center gap-3">
         {/* Avatar */}
