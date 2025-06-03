@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useRef, useEffect } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { getTodayWeather } from "@/services/getWeather";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -13,13 +14,13 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const [dateStr, setDateStr] = useState("");
+  const [temperature, setTemperature] = useState(null);
+  const [locationName, setLocationName] = useState("");
 
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/login");
   };
-
-  const avatarLetter = user?.displayName?.[0]?.toUpperCase() || "U";
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -45,9 +46,29 @@ export default function Navbar() {
     const now = new Date();
     const options = { weekday: "long", day: "numeric", month: "long" };
     const date = now.toLocaleDateString("es-AR", options);
-
     setDateStr(capitalize(date));
+
+    // Obtener ubicación del usuario
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const weather = await getTodayWeather(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setTemperature(Math.round(weather.main.temp));
+          setLocationName(weather.name);
+        } catch (err) {
+          console.error("Error al obtener clima:", err.message);
+        }
+      },
+      (err) => {
+        console.error("Ubicación denegada:", err.message);
+      }
+    );
   }, []);
+
+  const avatarLetter = user?.displayName?.[0]?.toUpperCase() || "U";
 
   return (
     <nav className="navbar px-3 py-4 justify-content-between">
@@ -55,7 +76,15 @@ export default function Navbar() {
         <img src="/logo.png" alt="menta" />
       </Link>
 
-      <h1>{dateStr}</h1>
+      <h1>
+        {dateStr}
+        {temperature !== null && (
+          <span className="ms-3 text-white-50" style={{ fontSize: "2rem" }}>
+            <span style={{ color: "#b4e9d2" }}>&diams;</span> {temperature}°C
+            {locationName && ` · ${locationName}`}
+          </span>
+        )}
+      </h1>
 
       <div className="position-relative d-flex align-items-center gap-3">
         {/* Avatar */}
