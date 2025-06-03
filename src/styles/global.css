@@ -5,9 +5,9 @@
   --dark-menta-color: #5daf9a;
   --white-color: #f5f5f5;
   --text-color: #4b4b4b;
-  --black-color: #0e1b24;
+  --black-color: #08141f;
   --font-size: 14px;
-  --bg: #0e1b24;
+  --bg: #08141f;
   --panel: #d4d4d4;
   --text: #212529;
   --font-family: "Inter", sans-serif;
@@ -16,17 +16,6 @@
   --swiper-theme-color: #ff4e00;
 }
 
-:root {
-  --bg-color: #0e1b24;
-  --card-bg: #121e29;
-  --text-color: #ffffff;
-  --text-muted: #98a6ad;
-  --accent-color: #1dd1a1;
-  --danger-color: #ff6b6b;
-  --highlight-color: #3b82f6;
-  --border-radius: 12px;
-  --font-family: "Inter", sans-serif;
-}
 /* Reset */
 
 html {
@@ -115,10 +104,12 @@ body.modal-open {
 .list-group-item,
 .form-control,
 .form-select,
-input {
+input,
+.custom-panel {
   background-color: var(--panel) !important;
   color: #fff !important;
   border-color: #333 !important;
+  border-radius: 4px;
 }
 
 .list-group-item + .list-group-item {
@@ -480,8 +471,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* Navegación superior */
 .react-calendar__navigation {
-  background-color: transparent;
-  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  line-height: 44px;
 }
 
 .react-calendar__navigation button {

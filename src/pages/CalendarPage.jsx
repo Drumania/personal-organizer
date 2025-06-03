@@ -170,7 +170,7 @@ export default function CalendarPage() {
       </div>
 
       <div className="row">
-        <div className="col-12 mb-4">
+        <div className="col-12 custom-panel mb-4">
           <Calendar
             onChange={setSelectedDate}
             value={selectedDate}
