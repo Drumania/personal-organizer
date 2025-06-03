@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
+import { isSameDay, isAfter, parseISO } from "date-fns";
 import {
   collection,
   query,
@@ -107,7 +108,37 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (user) {
-      fetchMonthEvents(new Date());
+      const init = async () => {
+        const q = query(
+          collection(db, "events"),
+          where("userId", "==", user.uid)
+        );
+        const snap = await getDocs(q);
+        const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+        // Agrupamos fechas para render del calendario
+        const counts = data.reduce((acc, event) => {
+          if (!acc[event.date]) acc[event.date] = 0;
+          acc[event.date]++;
+          return acc;
+        }, {});
+        setEventDates(counts);
+
+        // Encontrar la próxima fecha con evento
+        const today = new Date();
+        const futureEvents = data
+          .map((e) => parseISO(e.date)) // ← usamos parseISO aquí
+          .filter((d) => isAfter(d, today) || isSameDay(d, today))
+          .sort((a, b) => a - b);
+
+        if (futureEvents.length > 0) {
+          setSelectedDate(futureEvents[0]);
+        } else {
+          setSelectedDate(today); // fallback
+        }
+      };
+
+      init();
     }
   }, [user]);
 
