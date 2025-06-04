@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+
 import {
   format,
   addDays,
@@ -27,6 +28,7 @@ import EventThumb from "@/components/EventThumb";
 import DateTimeline from "@/components/DateTimeline";
 import CalendarPage from "@/pages/CalendarPage";
 import ShoppingList from "@/pages/ShoppingList";
+import DialogAddTask from "@/components/Dashboard/DialogAddTask";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -226,6 +228,22 @@ export default function Dashboard() {
           <CalendarPage />
           <ShoppingList />
         </div>
+
+        <DialogAddTask
+          visible={showModal}
+          setVisible={setShowModal}
+          userId={user.uid}
+          setTasks={setTasks}
+          editingId={editingId}
+          title={title}
+          setTitle={setTitle}
+          priority={priority}
+          setPriority={setPriority}
+          date={date}
+          setDate={setDate}
+          category={category}
+          setCategory={setCategory}
+        />
       </div>
     </div>
   );
